@@ -1,0 +1,175 @@
+========================================================================
+  FLUTTER DASH — Future Improvement Ideas
+  Created: 2026-03-24
+========================================================================
+
+These are potential enhancements for the flutter_dash framework and
+dashboards. Grouped by effort level. Pick up as needed.
+
+
+------------------------------------------------------------------------
+  QUICK WINS  (low effort, high value)
+------------------------------------------------------------------------
+
+1. Export to Excel / PDF
+   - Add a download button that exports filtered data + KPIs to a
+     formatted .xlsx file using openpyxl, or a PDF summary with fpdf2.
+   - Finance teams live in Excel — this is high-value, low-effort.
+
+2. Snapshot / Commentary Capture
+   - Let users add a text note to a specific period's KPIs
+     (e.g. "Week 12 drop due to Grand National scheduling").
+   - Save alongside the data in a small JSON or CSV file.
+   - Great for audit trail and institutional memory.
+
+3. Conditional Formatting in Tables
+   - Heat-map style colouring on variance columns.
+   - Already have positive/negative colour tokens in ThemeTokens.
+   - Apply directly in data_table.py using Pandas Styler.
+
+4. AG Grid Integration (streamlit-aggrid)
+   - Replace basic st.dataframe with streamlit-aggrid for sortable,
+     filterable, pinnable columns.
+   - Finance users expect Excel-like tables.
+   - pip install streamlit-aggrid, then swap in data_table.py.
+
+5. Light / Dark Theme Toggle
+   - Already have FLUTTER_LIGHT and FLUTTER_DARK palettes.
+   - Add a toggle in the sidebar (SidebarBuilder) that switches
+     between them and stores preference in session_state.
+
+
+------------------------------------------------------------------------
+  MEDIUM EFFORT  (worth prioritising)
+------------------------------------------------------------------------
+
+6. Automated Commentary via Genie AI
+   - Once the GenieClient stub is wired to real Genie API, auto-generate
+     a "What happened this week" paragraph beneath each KPI section.
+   - Finance people read narratives, not just numbers.
+   - The stub in integrations/genie.py has comments showing exactly
+     where the API call goes.
+
+7. Alerting / Thresholds
+   - Define KPI thresholds in config.py
+     (e.g. margin < 15% = red alert).
+   - Show a banner or warning when a threshold is breached.
+   - Could later integrate with Teams/Slack/email notifications.
+
+8. Period-over-Period Comparison Toggle
+   - Let users switch between: vs LY, vs Budget, vs Prior Period,
+     vs Rolling Average — all from one dropdown.
+   - Config already supports ty_col, ly_col, bud_col per MetricDef.
+   - Just need UI toggle + dynamic Comparison generation.
+
+9. Drill-Down Navigation
+   - Click a KPI card → jump to a detail page filtered to that metric.
+   - Use Streamlit's st.query_params for URL-based navigation.
+   - Each section can become its own page with deep-link support.
+
+10. Favourites / Bookmarks
+    - Save a specific filter combination (period + brands + dimensions)
+      as a named bookmark.
+    - Store in st.session_state or a small local config file.
+    - Dropdown to quickly switch between saved views.
+
+11. Multi-Currency Support
+    - If Flutter operates across markets with different currencies,
+      add a currency selector that applies FX rates.
+    - Store FX rates in a config or load from Unity Catalog.
+
+12. Variance Waterfall Charts
+    - Use the existing waterfall_chart component to show:
+      Budget → Volume impact → Price impact → Mix impact → Actual.
+    - Very powerful for finance variance analysis presentations.
+
+
+------------------------------------------------------------------------
+  LARGER INITIATIVES  (plan as projects)
+------------------------------------------------------------------------
+
+13. Dashboard Gallery / Launcher
+    - A home page that lists all available dashboards (analytics, P&L,
+      trading, etc.) with descriptions and links.
+    - Each dashboard is a separate dashboards/ folder.
+    - Single entry point: app.py routes to the selected dashboard.
+
+14. Row-Level Security
+    - When running on Databricks, restrict data visibility by user/role
+      using Unity Catalog permissions.
+    - The DatabricksConnector already has the right place to add this.
+    - Important for finance governance and compliance.
+
+15. Scheduled Email Reports
+    - Weekly PDF/HTML email with KPI summary, generated from the same
+      section render functions.
+    - Run as a Databricks Job on a cron schedule.
+    - Re-uses the same formatting/theming as the live dashboard.
+
+16. Audit Trail / Usage Logging
+    - Log who viewed what data, when, and what filters they used.
+    - Important for finance governance.
+    - On Databricks, write to a Delta table. Locally, write to a log file.
+
+17. Mobile-Responsive Layout
+    - Streamlit's column system works on mobile but could be optimised.
+    - Add custom CSS media queries in theme/css.py.
+    - Consider a "mobile mode" with stacked single-column layout.
+
+
+------------------------------------------------------------------------
+  DATA / ANALYTICS ENHANCEMENTS
+------------------------------------------------------------------------
+
+18. Simple Forecasting Widget
+    - Trend extrapolation using statsmodels or Prophet.
+    - Show "if current trend continues, month-end will be X".
+    - Display as a dashed line extension on existing trend charts.
+
+19. Anomaly Detection
+    - Flag unusual data points automatically (Z-score or IQR-based).
+    - Highlight them on charts with a different marker.
+    - Surface as alerts in the KPI section.
+
+20. Cohort Analysis
+    - Track customer/product cohort performance over time.
+    - Useful for understanding retention, LTV, or product mix shifts.
+
+21. What-If Scenario Modelling
+    - Sliders to adjust assumptions (e.g. "what if volume drops 10%?").
+    - Recalculate KPIs in real-time and show projected impact.
+    - Very useful for budget/forecast presentations.
+
+22. YTD / Rolling Averages
+    - Add cumulative YTD views and rolling 4-week / 13-week averages.
+    - Common in finance reporting — smooth out weekly noise.
+    - Can be added as aggregation helpers in data/aggregation.py.
+
+
+------------------------------------------------------------------------
+  DEVELOPER EXPERIENCE
+------------------------------------------------------------------------
+
+23. Dashboard Cookiecutter Template
+    - A template that generates a new dashboard folder with config.py,
+      data_loader.py, sections/, and a starter app.py.
+    - Reduces onboarding time for new dashboards to minutes.
+    - Use cookiecutter or a simple Python script.
+
+24. Unit Tests
+    - Add pytest tests for formatters, helpers, aggregation functions.
+    - Ensures the framework stays reliable as the team adds features.
+    - Start with data/aggregation.py — most testable code.
+
+25. CI/CD Pipeline
+    - GitHub Actions workflow: lint (ruff), test (pytest), deploy.
+    - Auto-deploy to Streamlit Cloud or Databricks Apps on merge to main.
+
+26. Documentation Site
+    - Auto-generate docs from docstrings using mkdocs or Sphinx.
+    - Host on GitHub Pages for free.
+    - Include examples of creating new dashboards and components.
+
+========================================================================
+  END OF IDEAS
+========================================================================
