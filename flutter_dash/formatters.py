@@ -127,3 +127,28 @@ def format_comparison(
     delta_pct_str = f"{raw_delta_pct * 100:.1f}%"
 
     return delta_str, delta_pct_str, ref_str, raw_delta, raw_delta_pct
+
+
+# ── Table currency formatter (in thousands, no symbol) ────────────────────────
+def fmt_table_thousands(v: float) -> str:
+    """
+    Format a value in thousands for clean table display.
+
+    No currency symbol, no K/M suffix — just a plain number divided by 1,000.
+    Designed to pair with a "£'000s" header label.
+
+    Examples:
+        fmt_table_thousands(1_500_000)   → "1,500.0"
+        fmt_table_thousands(45_600)      → "45.6"
+        fmt_table_thousands(1_234)       → "1.2"
+        fmt_table_thousands(-20_300)     → "-20.3"
+        fmt_table_thousands(None)        → "N/A"
+    """
+    if v is None:
+        return "N/A"
+    val = v / 1000
+    if abs(val) < 0.05:
+        return "0.0"
+    if abs(val) >= 100:
+        return f"{val:,.0f}"
+    return f"{val:,.1f}"

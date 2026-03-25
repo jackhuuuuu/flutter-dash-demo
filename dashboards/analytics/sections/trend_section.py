@@ -85,11 +85,11 @@ def render_trend_section(
 
     line_daily[DATE_COL] = pd.to_datetime(line_daily[DATE_COL])
 
-    # Series styles: TY, LY, Budget
+    # Series styles: TY, LY, Budget — standardised colours
     styles = [
-        SeriesStyle(label="TY"),
-        SeriesStyle(label="LY", dash="dash"),
-        SeriesStyle(label="Budget", dash="dot"),
+        SeriesStyle(label="TY",     colour="#00D4FF", dash="solid"),
+        SeriesStyle(label="LY",     colour="#7AB7E2", dash="dash"),
+        SeriesStyle(label="Budget", colour="#FFB300", dash="dot"),
     ]
 
     # Resolve drivers for the chart tooltips

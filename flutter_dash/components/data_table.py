@@ -27,8 +27,9 @@ import pandas as pd
 from typing import List, Optional
 
 from flutter_dash.theme import get_active_theme
-from flutter_dash.theme.tokens import ThemeTokens
+from flutter_dash.theme.tokens import ThemeTokens, hex_to_rgba
 from flutter_dash.helpers import MetricDef
+from flutter_dash.formatters import fmt_table_thousands
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -87,12 +88,17 @@ def _aggregate_metric(df: pd.DataFrame, m: MetricDef) -> dict:
 # INTERNAL: Format variance sub-columns
 # ═════════════════════════════════════════════════════════════════════════════
 
-def _format_variances(ty, ly, bud, m: MetricDef):
+def _format_variances(ty, ly, bud, m: MetricDef, table_fmt=None):
     """
     Calculate and format the 5 sub-columns for one metric:
       val_str, yoy_d_str, yoy_p_str, bud_v_str, bud_p_str, yoy_d_raw, bud_v_raw
 
     Returns raw deltas (yoy_d_raw, bud_v_raw) for colour-coding.
+
+    Parameters
+    ----------
+    table_fmt : Callable, optional
+        Override formatter for non-pct metrics (e.g. fmt_table_thousands).
     """
     yoy_d = (ty - ly) if ly else 0.0
     yoy_p = yoy_d / abs(ly) if ly else 0.0
@@ -111,11 +117,12 @@ def _format_variances(ty, ly, bud, m: MetricDef):
             bud_v,
         )
     else:
+        fmt = table_fmt if table_fmt else m.formatter
         return (
-            m.formatter(ty),
-            m.formatter(yoy_d),
+            fmt(ty),
+            fmt(yoy_d),
             f"{yoy_p * 100:.1f}%",
-            m.formatter(bud_v),
+            fmt(bud_v),
             f"{bud_p * 100:.1f}%",
             yoy_d,
             bud_v,
@@ -188,7 +195,7 @@ def _td_dim(label: str, level: int, tokens: ThemeTokens) -> str:
     styles = [
         # Level 0 — Grand Total
         dict(
-            color=tokens.accent, fw="700", bg=f"rgba(0,212,255,0.07)",
+            color=tokens.accent, fw="700", bg=hex_to_rgba(tokens.accent, 0.07),
             pl="12px", prefix="", fs="13px",
             bt=f"border-top:2px solid {tokens.accent}44;",
         ),
@@ -220,7 +227,8 @@ def _td_val(
     first_in_group: bool = False,
 ) -> str:
     """Value cell (right-aligned, monospace font)."""
-    bgs = [f"rgba(0,212,255,0.07)", tokens.bg_elevated, tokens.bg_surface]
+    accent_bg = hex_to_rgba(tokens.accent, 0.07)
+    bgs = [accent_bg, tokens.bg_elevated, tokens.bg_surface]
     fws = ["700", "700", "400"]
     fss = ["13px", "12px", "12px"]
     border = f"border-left:2px solid {tokens.border};" if first_in_group else ""
@@ -245,7 +253,8 @@ def _td_delta(
 ) -> str:
     """Delta cell — colour-coded green/red based on variance direction."""
     col = _pos_neg_colour(raw_delta, tokens)
-    bgs = [f"rgba(0,212,255,0.07)", tokens.bg_elevated, tokens.bg_surface]
+    accent_bg = hex_to_rgba(tokens.accent, 0.07)
+    bgs = [accent_bg, tokens.bg_elevated, tokens.bg_surface]
     fws = ["700", "700", "400"]
     fss = ["13px", "12px", "12px"]
     bt = (
@@ -275,6 +284,7 @@ def data_table(
     title: str = "",
     dim_header: Optional[str] = None,
     tokens: Optional[ThemeTokens] = None,
+    currency_unit: Optional[str] = None,
 ) -> None:
     """
     Render a hierarchical financial table.
@@ -333,14 +343,22 @@ def data_table(
     if dim_header is None:
         dim_header = " / ".join(col.replace("_", " ").title() for col in group_by)
 
+    # ── Determine table formatter based on currency_unit ──────────────────────
+    table_fmt = None
+    unit_suffix = ""
+    if currency_unit == "thousands":
+        table_fmt = fmt_table_thousands
+        unit_suffix = " (£'000s)"
+
     # ── Build metric cells for one aggregated row ─────────────────────────────
     def build_metric_cells(sub_df: pd.DataFrame, level: int) -> str:
         cells = ""
         for i, m in enumerate(metrics):
             first = (i == 0)
             agg = _aggregate_metric(sub_df, m)
+            fmt_override = table_fmt if (table_fmt and not m.is_pct) else None
             v, yd, yp, bv, bp, yoy_d, bud_v = _format_variances(
-                agg["ty"], agg["ly"], agg["bud"], m
+                agg["ty"], agg["ly"], agg["bud"], m, table_fmt=fmt_override
             )
             cells += _td_val(v, level, tokens, first_in_group=first)
             cells += _td_delta(yd, yoy_d, level, tokens)
@@ -353,7 +371,8 @@ def data_table(
     # Row 1: dimension header + metric group headers
     header1 = "<tr>" + _th_dim(dim_header, tokens)
     for m in metrics:
-        header1 += _th_metric(m.label, tokens)
+        label = m.label + unit_suffix if (unit_suffix and not m.is_pct) else m.label
+        header1 += _th_metric(label, tokens)
     header1 += "</tr>"
 
     # Row 2: sub-column headers (Value, YoY Δ, YoY %, Bud Var, Bud %)

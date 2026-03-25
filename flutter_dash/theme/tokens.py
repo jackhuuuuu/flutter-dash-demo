@@ -65,3 +65,10 @@ class ThemeTokens:
     # ── Fonts ─────────────────────────────────────────────────────────────────
     font_primary: str = "DM Sans, system-ui, sans-serif"  # Body & headings
     font_mono: str = "JetBrains Mono, monospace"           # Numbers in tables
+
+
+def hex_to_rgba(hex_color: str, alpha: float) -> str:
+    """Convert #RRGGBB to rgba(r,g,b,alpha) for use in CSS/HTML."""
+    h = hex_color.lstrip('#')
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"

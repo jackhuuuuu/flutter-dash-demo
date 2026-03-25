@@ -210,6 +210,7 @@ def line_chart(
     for col, style in zip(y_cols, series_styles):
         if col not in df.columns:
             continue
+        i_col = y_cols.index(col)
 
         # Build custom data array for tooltips
         # Each row: [formatted value for each series..., then each driver...]
@@ -233,7 +234,7 @@ def line_chart(
         if has_drivers:
             base_idx = len(series_styles)
             hover_lines.append(
-                "<br><span style='font-size:11px;opacity:.75;'>Drivers</span><br>"
+                "<br><span style='font-size:11px;opacity:.75;'>Drivers \u2014 YoY</span><br>"
             )
             for d_i, d_col in enumerate(driver_cols_present):
                 d_label = d_col.replace("_", " ").title()
@@ -247,6 +248,7 @@ def line_chart(
             x=df[x_col],
             y=df[col],
             name=style.label,
+            legendrank=i_col,
             mode="lines+markers",
             line=dict(color=style.colour, width=2.5, dash=style.dash),
             marker=dict(size=4, color=style.colour),
@@ -326,9 +328,19 @@ def bar_chart(
 
     fig = go.Figure()
 
-    for col, style in zip(y_cols, series_styles):
+    # Sort series by display_order if provided (controls bar position in group)
+    indexed_pairs = list(enumerate(zip(y_cols, series_styles)))
+    indexed_pairs.sort(key=lambda x: (
+        x[1][1].display_order if x[1][1].display_order is not None else x[0]
+    ))
+
+    for orig_idx, (col, style) in indexed_pairs:
         if col not in df.columns:
             continue
+
+        # legendrank based on original series order (TY=0, LY=1, Budget=2)
+        # so legend always shows TY first regardless of bar display order
+        legend_rank = orig_idx
 
         text_vals = [formatter(v) for v in df[col]]
 
@@ -336,6 +348,7 @@ def bar_chart(
             x=df[x_col],
             y=df[col],
             name=style.label,
+            legendrank=legend_rank,
             marker=dict(
                 color=style.colour,
                 opacity=0.85,
@@ -352,16 +365,11 @@ def bar_chart(
             ),
         ))
 
-    # Pad y-axis so bar labels don't get clipped
-    all_vals = []
-    for col in y_cols:
-        if col in df.columns:
-            all_vals.extend(df[col].dropna().tolist())
-    if all_vals:
-        max_val = max(all_vals)
-        min_val = min(all_vals)
-        padding = (max_val - min_val) * 0.18
-        layout["yaxis"]["range"] = [min(0, min_val), max_val + padding]
+    # Let Plotly auto-size the y-axis to fit bar labels (textposition="outside")
+    # autorange + rangemode ensures it starts from 0 and expands to fit text
+    layout["yaxis"]["autorange"] = True
+    layout["yaxis"]["rangemode"] = "tozero"
+    layout.setdefault("margin", {})["t"] = 60
 
     fig.update_layout(**layout)
     return fig

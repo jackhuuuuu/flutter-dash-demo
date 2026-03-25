@@ -39,7 +39,7 @@ def render_brand_breakdown(
         st.info("No data available for the selected period and filters.")
         return
 
-    y_cols = [metric_def.ly_col, metric_def.ty_col, metric_def.bud_col]
+    y_cols = [metric_def.ty_col, metric_def.ly_col, metric_def.bud_col]
 
     if metric_def.is_pct and metric_def.weight_col:
         # Weighted average per brand
@@ -71,11 +71,12 @@ def render_brand_breakdown(
             .reset_index()
         )
 
-    # Series styles: LY, TY, Budget (order matches y_cols)
+    # Series styles match y_cols order: TY, LY, Budget
+    # display_order controls bar position: LY(0) | TY(1) | Budget(2)
     styles = [
-        SeriesStyle(label="LY"),
-        SeriesStyle(label="TY"),
-        SeriesStyle(label="Budget"),
+        SeriesStyle(label="TY",     colour="#00D4FF", display_order=1),
+        SeriesStyle(label="LY",     colour="#7AB7E2", display_order=0),
+        SeriesStyle(label="Budget", colour="#FFB300", display_order=2),
     ]
 
     fig = bar_chart(

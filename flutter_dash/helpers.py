@@ -157,10 +157,14 @@ class SeriesStyle:
     label : str
         Legend label, e.g. "TY", "LY", "Budget"
     colour : str
-        Hex colour code, e.g. "#00D4FF"
+        Hex colour code, e.g. "#00D4FF". If empty, auto-assigned from theme.
     dash : str
         Line dash style: "solid", "dash", or "dot".
         Only used by line charts; ignored by bar charts.
+    display_order : int, optional
+        Controls the order in which bars appear within a group for bar charts.
+        Lower numbers appear first (left-to-right). If None, uses the
+        order in which series are passed.
 
     Example
     -------
@@ -173,3 +177,4 @@ class SeriesStyle:
     label: str
     colour: str = ""
     dash: str = "solid"
+    display_order: Optional[int] = None

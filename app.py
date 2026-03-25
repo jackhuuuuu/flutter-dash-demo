@@ -28,6 +28,7 @@ from dashboards.analytics.sections import (
     render_trend_section,
     render_brand_breakdown,
     render_detail_table,
+    render_additional_charts,
 )
 
 # ── Theme ─────────────────────────────────────────────────────────────────────
@@ -97,3 +98,5 @@ render_trend_section(
 render_brand_breakdown(df_period, sel_metric, period, brand_label, product_label)
 
 render_detail_table(df_period, period, brand_label, product_label)
+
+render_additional_charts(df_period, period, brand_label, product_label)

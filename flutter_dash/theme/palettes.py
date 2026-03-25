@@ -13,33 +13,38 @@ Available palettes:
 from flutter_dash.theme.tokens import ThemeTokens
 
 # ── Flutter Dark ──────────────────────────────────────────────────────────────
-# This matches the original dashboard colours exactly.
+# Flutter Entertainment brand dark theme.
+# Navy-anchored palette built from Flutter's corporate identity:
+#   - Deep Space navy backgrounds (#051324 → #0B1F38 → #1A2540)
+#   - Electric Cyan hero accent (#00D4FF)
+#   - Sky Blue secondary (#7AB7E2)
+#   - Standard finance status colours (mint ✓, coral ✗, amber ⚠)
 FLUTTER_DARK = ThemeTokens(
-    # Backgrounds: deep navy, layered from darkest to lightest
-    bg_primary="#0B0F1A",
-    bg_surface="#131929",
-    bg_elevated="#1C2333",
+    # Backgrounds: Flutter Navy, layered from deepest to lightest
+    bg_primary="#051324",       # Flutter Deep Space — page background
+    bg_surface="#0B1F38",       # Cards, sidebar, chart backgrounds
+    bg_elevated="#1A2540",      # Dropdowns, hover states, tooltips (Deep Slate)
     # Border
-    border="#2A3450",
+    border="#1E3A5F",           # Navy-tinted borders and dividers
     # Text
-    text_primary="#E8EDF5",
-    text_muted="#7A8BA8",
+    text_primary="#FFFFFF",     # Pure White — headlines and values
+    text_muted="#8BAFC4",       # Muted sky blue — labels, captions
     # Semantic colours
-    accent="#00D4FF",       # Cyan — brand highlight
-    positive="#00E5A0",     # Green — favourable variance
-    negative="#FF4D6A",     # Red — adverse variance
-    neutral="#7A8BA8",      # Grey — no change
-    warning="#FFB300",      # Amber — budget/target
+    accent="#00D4FF",           # Electric Cyan — brand hero colour
+    positive="#00E5A0",         # Bright mint green — favourable
+    negative="#FF4D6A",         # Soft coral red — adverse
+    neutral="#8BAFC4",          # Muted sky blue — no change
+    warning="#FFB300",          # Bright amber/gold — budget/target
     # Chart series colours (in order: TY, LY, Budget, then extras)
     chart_series=[
-        "#00D4FF",  # cyan  — This Year
-        "#7A8BA8",  # grey  — Last Year
-        "#FFB300",  # amber — Budget
-        "#A78BFA",  # purple — extra series
-        "#34D399",  # teal  — extra series
-        "#FF6B6B",  # coral — extra series
+        "#00D4FF",  # Electric Cyan  — This Year
+        "#7AB7E2",  # Sky Blue       — Last Year
+        "#FFB300",  # Amber          — Budget
+        "#A78BFA",  # Purple         — extra series
+        "#34D399",  # Teal           — extra series
+        "#FF6B6B",  # Coral          — extra series
     ],
-    chart_grid="#1E2A40",
+    chart_grid="#1A2540",       # Deep Slate gridlines
     # Fonts
     font_primary="DM Sans, system-ui, sans-serif",
     font_mono="JetBrains Mono, monospace",
@@ -47,29 +52,30 @@ FLUTTER_DARK = ThemeTokens(
 
 
 # ── Flutter Light ─────────────────────────────────────────────────────────────
-# Optional light theme — useful for printed reports or user preference.
-# You can expand this later with your team's preferred light-mode colours.
+# Flutter Entertainment brand light theme.
+# Inverts the dark palette for light-mode UIs or printed reports.
+# Uses Flutter Navy for text and a cooler blue-grey surface stack.
 FLUTTER_LIGHT = ThemeTokens(
-    bg_primary="#F5F7FA",
-    bg_surface="#FFFFFF",
-    bg_elevated="#F0F2F5",
-    border="#D1D5DB",
-    text_primary="#1F2937",
-    text_muted="#6B7280",
-    accent="#0EA5E9",
-    positive="#059669",
-    negative="#DC2626",
-    neutral="#6B7280",
-    warning="#D97706",
+    bg_primary="#F0F4F8",       # Cool blue-grey page background
+    bg_surface="#FFFFFF",       # Pure white cards
+    bg_elevated="#E8EFF5",      # Light blue-grey hover states
+    border="#C8D6E0",           # Soft navy border
+    text_primary="#051324",     # Flutter Navy — primary text
+    text_muted="#5A7A94",       # Muted navy — labels, captions
+    accent="#0094CC",           # Deeper cyan for readability on white
+    positive="#059669",         # Dark mint — favourable
+    negative="#DC2626",         # Dark red — adverse
+    neutral="#5A7A94",          # Muted navy — neutral
+    warning="#D97706",          # Dark amber — budget/target
     chart_series=[
-        "#0EA5E9",  # blue
-        "#9CA3AF",  # grey
-        "#D97706",  # amber
-        "#7C3AED",  # purple
-        "#059669",  # green
-        "#DC2626",  # red
+        "#0094CC",  # Cyan        — This Year
+        "#7AB7E2",  # Sky Blue    — Last Year
+        "#D97706",  # Amber       — Budget
+        "#7C3AED",  # Purple      — extra series
+        "#059669",  # Green       — extra series
+        "#DC2626",  # Red         — extra series
     ],
-    chart_grid="#E5E7EB",
+    chart_grid="#E0E8EF",       # Soft gridlines
     font_primary="DM Sans, system-ui, sans-serif",
     font_mono="JetBrains Mono, monospace",
 )

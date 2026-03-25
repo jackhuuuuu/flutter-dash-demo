@@ -40,4 +40,5 @@ def render_detail_table(
         df=df_period,
         metrics=TABLE_METRICS,
         group_by=TABLE_GROUP_BY,
+        currency_unit="thousands",
     )

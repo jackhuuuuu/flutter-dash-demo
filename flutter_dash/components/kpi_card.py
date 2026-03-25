@@ -18,7 +18,7 @@ import streamlit.components.v1 as stc
 from typing import Callable, Dict, List, Optional
 
 from flutter_dash.theme import get_active_theme
-from flutter_dash.theme.tokens import ThemeTokens
+from flutter_dash.theme.tokens import ThemeTokens, hex_to_rgba
 from flutter_dash.formatters import fmt_currency, fmt_pct
 from flutter_dash.helpers import delta_colour, delta_arrow, Comparison
 
@@ -35,7 +35,7 @@ def kpi_card(
     period_label: str = "MTD",
     is_pct: bool = False,
     tokens: Optional[ThemeTokens] = None,
-    height: int = 255,
+    height: int = 220,
 ) -> None:
     """
     Render a styled KPI card.
@@ -90,9 +90,11 @@ def kpi_card(
         ref_str = formatter(comp.ref_value)
         if is_pct:
             delta_str = f"{comp.delta * 100:+.2f}pp"
+            badge_content = f"{arr} {delta_str}"
         else:
             delta_str = formatter(comp.delta)
-        pct_str = f"{comp.delta_pct * 100:.1f}%"
+            pct_str = f"{comp.delta_pct * 100:.1f}%"
+            badge_content = f"{arr} {delta_str}&nbsp; ({pct_str})"
 
         compare_html += f"""
         <div class="compare-block">
@@ -100,11 +102,8 @@ def kpi_card(
             <span class="compare-label">{comp.label}</span>
             <span class="ref-value">{ref_str}</span>
             <span class="divider"></span>
-            <span class="badge" style="background:{col}22;color:{col};">
-              {arr} {delta_str}
-            </span>
-            <span class="badge" style="background:{col}22;color:{col};">
-              {arr} {pct_str}
+            <span class="badge" style="background:{col}15;color:{col};">
+              {badge_content}
             </span>
           </div>
         </div>
@@ -120,12 +119,15 @@ def kpi_card(
             d_arr = delta_arrow(d_val)
             d_pct = d_val / total * 100
             rows += f"""
-            <div style="display:flex;justify-content:space-between;align-items:center;
-                        padding:5px 0;border-bottom:1px solid {tokens.border};">
-              <span style="color:{tokens.text_muted};font-size:11px;">{d_name}</span>
-              <span style="color:{d_col};font-size:12px;font-weight:600;text-align:right;">
+            <div style="display:flex;align-items:center;gap:6px;
+                        padding:4px 0;border-bottom:1px solid {tokens.border};">
+              <span style="color:{tokens.text_muted};font-size:11px;flex:1;
+                           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {d_name}</span>
+              <span style="color:{d_col};font-size:11px;font-weight:600;
+                           white-space:nowrap;">
                 {d_arr} {driver_formatter(abs(d_val))}
-                <span style="font-size:10px;opacity:.75;"> ({d_pct:.1f}%)</span>
+                <span style="font-size:10px;opacity:.75;">({d_pct:.1f}%)</span>
               </span>
             </div>"""
         drivers_html = f"""
@@ -136,6 +138,10 @@ def kpi_card(
           </div>
           {rows}
         </div>"""
+
+    # ── Pre-compute accent RGBA values ─────────────────────────────────────────
+    accent_bg_12 = hex_to_rgba(tokens.accent, 0.12)
+    accent_bg_10 = hex_to_rgba(tokens.accent, 0.1)
 
     # ── Flip buttons ──────────────────────────────────────────────────────────
     front_id = f"front_{card_index}"
@@ -148,7 +154,7 @@ def kpi_card(
           <button onclick="
             document.getElementById('{front_id}').style.display='none';
             document.getElementById('{back_id}').style.display='block';
-          " style="background:rgba(0,212,255,0.1);border:1px solid {tokens.accent};
+          " style="background:{accent_bg_10};border:1px solid {tokens.accent};
                    cursor:pointer;color:{tokens.accent};font-size:11px;
                    border-radius:6px;padding:4px 12px;width:100%;
                    text-transform:uppercase;letter-spacing:.07em;font-weight:600;">
@@ -161,7 +167,7 @@ def kpi_card(
       <button onclick="
         document.getElementById('{back_id}').style.display='none';
         document.getElementById('{front_id}').style.display='block';
-      " style="background:rgba(0,212,255,0.1);border:1px solid {tokens.accent};
+      " style="background:{accent_bg_10};border:1px solid {tokens.accent};
                cursor:pointer;color:{tokens.accent};font-size:11px;
                border-radius:6px;padding:4px 12px;width:100%;
                text-transform:uppercase;letter-spacing:.07em;font-weight:600;">
@@ -174,22 +180,22 @@ def kpi_card(
     <!DOCTYPE html><html><head>
     <style>
       * {{ box-sizing:border-box; }}
-      body {{
+      html, body {{
         margin:0;padding:0;
-        background:{tokens.bg_surface};
+        background:transparent;
         font-family:{tokens.font_primary};
         color:{tokens.text_primary};
+        overflow:hidden;
       }}
       .card {{
         background:{tokens.bg_surface};
         border:1px solid {tokens.border};
         border-radius:14px;
         padding:16px 14px;
-        min-height:210px;
       }}
       .period-pill {{
         display:inline-block;
-        background:rgba(0,212,255,0.12);
+        background:{accent_bg_12};
         color:{tokens.accent};
         font-size:10px;font-weight:600;
         text-transform:uppercase;letter-spacing:.08em;
