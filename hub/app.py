@@ -16,6 +16,7 @@ In production, this is deployed as its own Databricks App.
 
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 
 from flutter_dash.theme import apply_theme
 from flutter_dash.theme.palettes import FLUTTER_DARK, FLUTTER_LIGHT
@@ -55,9 +56,8 @@ def _get_app_url(app: dict, theme: str) -> str:
     so dashboards inherit the user's chosen theme from the hub.
     """
     if "url" in app:
-        return app["url"]
-
-    if DATABRICKS_BASE_URL:
+        base = app["url"]
+    elif DATABRICKS_BASE_URL:
         base = f"{DATABRICKS_BASE_URL}/{app['app_path']}"
     else:
         base = f"{LOCAL_BASE_URL}:{app['local_port']}"
@@ -190,7 +190,27 @@ _palette = FLUTTER_LIGHT if st.session_state.theme == "light" else FLUTTER_DARK
 apply_theme(st, _palette, page_title=HUB_TITLE, page_icon=HUB_PAGE_ICON)
 tokens = _palette
 
+# ── Search bar CSS — modern UX ────────────────────────────────────────────────
+st.markdown(
+    """
+    <style>
+    /* Hide placeholder on focus for a clean typing experience */
+    .stTextInput input:focus::placeholder {
+        color: transparent !important;
+    }
+    /* Ensure blinking cursor is visible */
+    .stTextInput input {
+        caret-color: auto;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ── Top bar: search + theme toggle ───────────────────────────────────────────
+if "search" not in st.session_state:
+    st.session_state.search = ""
+
 _col_spacer, _col_search, _col_theme = st.columns([5, 5, 1])
 
 with _col_search:
@@ -198,6 +218,7 @@ with _col_search:
         "Search apps",
         placeholder="🔍  Search dashboards and apps...",
         label_visibility="collapsed",
+        key="search",
     )
 
 with _col_theme:
@@ -205,6 +226,31 @@ with _col_theme:
     if st.button("☀️" if _is_dark else "🌙", key="theme_toggle"):
         st.session_state.theme = "light" if _is_dark else "dark"
         st.rerun()
+
+# Inject JS for live search-as-you-type (Streamlit text_input only commits on Enter/blur)
+components.html("""
+<script>
+(function() {
+    const doc = window.parent.document;
+    function attach() {
+        const el = doc.querySelector('.stTextInput input');
+        if (!el || el._live) return;
+        el._live = true;
+        let t;
+        el.addEventListener('input', function() {
+            clearTimeout(t);
+            t = setTimeout(() => {
+                this.dispatchEvent(new KeyboardEvent('keydown', {
+                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
+                }));
+            }, 200);
+        });
+    }
+    attach();
+    new MutationObserver(attach).observe(doc.body, {childList: true, subtree: true});
+})();
+</script>
+""", height=0)
 
 # ── Logo banner ───────────────────────────────────────────────────────────────
 _render_logo(tokens)

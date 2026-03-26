@@ -64,6 +64,7 @@ APPS = [
         "status": "live",
         "local_port": 8502,
         "app_path": "apps/group_executive_report",
+        "url": "https://flutter-dash-demo-nip8zbftupozngv5a28zna.streamlit.app",
         "internal": True,
     },
     {
