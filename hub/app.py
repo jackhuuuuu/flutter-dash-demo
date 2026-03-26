@@ -257,8 +257,8 @@ components.html("""
                     setTimeout(function() {
                         self.focus();
                         self.setSelectionRange(pos, pos);
-                    }, 30);
-                }, 250);
+                    }, 20);
+                }, 100);
             });
         });
     }
