@@ -1,14 +1,25 @@
 # FBI Hub — Flutter Financial BI Platform
 
-Multi-app dashboard platform for Flutter UK&I, powered by Streamlit and Databricks Apps.
+A multi-app dashboard platform for Flutter UK&I, powered by **Streamlit**.  
+Think of it as a home page (the "Hub") that links to all your team's dashboards and analytics apps.
 
 ## What is this?
 
-This repo contains the **FBI Hub** (a landing page) and individual dashboard/app projects,
-all sharing the `flutter_dash` Python package for consistent theming, components, and data utilities.
+| What | Where |
+|------|-------|
+| **FBI Hub** (home page) | [hub/](hub/) |
+| **Group Executive Report** (first dashboard) | [apps/group_executive_report/](apps/group_executive_report/) |
+| **Shared styling & components** | [flutter_dash/](flutter_dash/) |
 
-Each app is **independently deployable** as a Databricks App — if one app has an issue,
-the others keep running. The hub links them together with search, theming, and discoverability.
+Each dashboard is **independent** — if one has a problem, the others keep running.  
+The hub connects them together with **search**, **light/dark theming**, and a tile-based launcher.
+
+### Live links (Streamlit Cloud)
+
+| App | URL |
+|-----|-----|
+| FBI Hub | *(deploy from `hub/app.py`)* |
+| Group Executive Report | https://flutter-dash-demo-nip8zbftupozngv5a28zna.streamlit.app |
 
 ---
 
@@ -51,43 +62,63 @@ the others keep running. The hub links them together with search, theming, and d
 
 ## Quick Start (Local Development)
 
+> **Prerequisites**: You need [Python 3.10+](https://www.python.org/downloads/) installed.  
+> If you're not sure, open a terminal and type `python --version`.
+
 ### 1. Clone and install
 
 ```bash
 git clone https://github.com/jackhuuuuu/flutter-dash-demo.git
 cd flutter-dash-demo
 
-# Create a virtual environment
+# Create a virtual environment (keeps packages isolated from your system)
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1   # Windows
-# source .venv/bin/activate    # macOS/Linux
 
-# Install flutter_dash in editable mode
+# Activate it
+.\.venv\Scripts\Activate.ps1   # Windows (PowerShell)
+# source .venv/bin/activate    # macOS / Linux
+
+# Install the shared flutter_dash package
 pip install -e .
 ```
 
-### 2. Run all apps
+### 2. Run all apps with one command
 
 ```powershell
-# Start FBI Hub (port 8501) and Group Executive Report (port 8502)
 .\scripts\run_local.ps1
 ```
 
-Or run individually:
+This script will:
+- **Auto-kill** any stale processes on the dashboard ports
+- Start the FBI Hub on **http://localhost:8501**
+- Start the Group Executive Report on **http://localhost:8502**
+- Press **Ctrl+C** to stop everything cleanly
+
+> **Tip**: If the script fails because a port is busy, just run it again — it cleans up automatically.
+
+### 3. Or run apps individually
+
+Open **two separate terminals**, activate the venv in each, then:
 
 ```powershell
+# Terminal 1 — Hub
 cd hub
 streamlit run app.py --server.port 8501
 
-# In a separate terminal:
+# Terminal 2 — Dashboard
 cd apps/group_executive_report
 streamlit run app.py --server.port 8502
 ```
 
-### 3. Open in browser
+### 4. Open in your browser
 
-- **FBI Hub**: http://localhost:8501
-- **Group Executive Report**: http://localhost:8502
+| App | Local URL |
+|-----|-----------|
+| FBI Hub | http://localhost:8501 |
+| Group Executive Report | http://localhost:8502 |
+
+When you click **"Launch →"** on a tile in the hub, it automatically opens the correct app —  
+locally it connects to `localhost`, on Streamlit Cloud it connects to the deployed URL.
 
 ---
 
@@ -145,16 +176,36 @@ Add your app to `hub/hub_config.py`:
     "status": "live",
     "local_port": 8503,                    # Pick an unused port
     "app_path": "apps/my_new_dashboard",
+    "cloud_url": "",                       # Fill in after deploying to Streamlit Cloud
     "internal": True,
 },
 ```
 
-### 5. Create `app.yaml`
+Also add it to `scripts/run_local.ps1` so the script starts it automatically:
+
+```powershell
+$apps = @(
+    # ... existing apps ...
+    @{ Port = 8503; Name = "My New Dashboard"; Path = "apps/my_new_dashboard" }
+)
+```
+
+### 5. Add the `cloud_url` (for Streamlit Cloud)
+
+If you're deploying to Streamlit Cloud, add the deployed URL so the hub can link to it:
+
+```python
+    "cloud_url": "https://your-app-name.streamlit.app",
+```
+
+When running locally, this is ignored — the hub uses `localhost:<port>` instead.
+
+### 6. Create `app.yaml`
 
 Copy from an existing app — this tells Databricks how to run it
 and lets the CI/CD pipeline detect changes.
 
-### 6. Run and test
+### 7. Run and test
 
 ```powershell
 cd apps/my_new_dashboard
@@ -163,7 +214,28 @@ streamlit run app.py --server.port 8503
 
 ---
 
-## Deployment (Databricks Apps via GitHub Actions)
+## Deployment
+
+### Streamlit Community Cloud (free)
+
+The simplest way to share dashboards with your team:
+
+1. Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub
+2. Click **"New app"** and fill in:
+
+   | Field | Hub | Dashboard |
+   |-------|-----|-----------|
+   | Repository | `jackhuuuuu/flutter-dash-demo` | `jackhuuuuu/flutter-dash-demo` |
+   | Branch | `main` | `main` |
+   | Main file path | `hub/app.py` | `apps/group_executive_report/app.py` |
+
+3. After deployment, copy the dashboard's URL and paste it into `hub/hub_config.py`  
+   as the `cloud_url` value. Commit, push, and the hub will auto-redeploy.
+
+> **How it works**: The hub auto-detects whether it's running locally or on Streamlit Cloud.  
+> Locally → links go to `localhost:<port>`. On the cloud → links use `cloud_url`.
+
+### Databricks Apps (enterprise)
 
 Each app is deployed independently via the CI/CD pipeline:
 
@@ -181,27 +253,34 @@ For production, point to the package from your private index or Git URL:
 flutter-dash @ git+https://github.com/jackhuuuuu/flutter-dash-demo.git
 ```
 
-To add a new app to the deployment pipeline, add a step in your workflow YAML
-following the same pattern as existing apps (workspace upload → deploy → permissions).
-
 ---
 
-## Key Concepts
+## Key Concepts (glossary)
 
-| Concept | Description |
-|---------|-------------|
-| **MetricDef** | Defines a metric: column names for TY/LY/Budget, formatter, percentage flag |
-| **Comparison** | Variance row (vs LY, vs Budget) displayed on KPI cards |
-| **SeriesStyle** | Chart series appearance (label, colour, dash). Auto-fills from theme if omitted |
-| **SidebarBuilder** | Composable sidebar: `.add_header()`, `.add_period_picker()`, `.add_multiselect()`, `.render()` |
-| **ThemeTokens** | Complete visual identity: backgrounds, text, semantic colours, chart palette |
+New to the codebase? Here's what the main building blocks mean:
+
+| Term | What it is | Where it lives |
+|------|-----------|----------------|
+| **MetricDef** | A "recipe" for a metric — which columns to use for This Year / Last Year / Budget, and how to format numbers | `config.py` in each app |
+| **Comparison** | A variance row shown on KPI cards (e.g. "+5% vs LY") | Used inside KPI sections |
+| **SeriesStyle** | How a line/bar looks on a chart (label, colour, dashed/solid). Fills in automatically from the theme if you don't set it | `flutter_dash/helpers.py` |
+| **SidebarBuilder** | A helper to build the sidebar step by step: `.add_header()` → `.add_period_picker()` → `.add_multiselect()` → `.render()` | `flutter_dash/components/sidebar.py` |
+| **ThemeTokens** | The full "visual identity" — background colours, text colours, accent, chart palette. Two built-in themes: Light and Dark | `flutter_dash/theme/palettes.py` |
 
 ## Theme System
 
 - Default theme: **Flutter Light** (`FLUTTER_LIGHT`)
 - Dark theme: **Flutter Dark** (`FLUTTER_DARK`)
-- Theme toggle available in the hub and each dashboard sidebar
-- Hub passes theme to dashboards via URL parameter `?theme=light|dark`
+- A 🌙/☀️ toggle button in the hub and each dashboard switches between them
+- The hub passes the chosen theme to dashboards via URL parameter `?theme=light|dark`
+- Charts, KPI cards, tables, and sidebar all adapt automatically
+
+## Hub Features
+
+- **Search**: Type in the search bar and results filter instantly as you type.  
+  Deleting characters shows more results. Clear the bar to see everything.
+- **Theme toggle**: Click 🌙/☀️ to switch light/dark. The theme carries over when you launch a dashboard.
+- **App tiles**: Each app shows its status (● Live or ◌ Coming Soon) with a launch link.
 
 ## Dependencies
 
@@ -210,4 +289,16 @@ following the same pattern as existing apps (workspace upload → deploy → per
 - `plotly >= 5.18.0`
 
 Optional:
-- `databricks-sql-connector >= 3.0.0` (for Databricks Apps deployment)
+- `databricks-sql-connector >= 3.0.0` (for Databricks deployment)
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Port already in use | Run `.\scripts\run_local.ps1` — it auto-kills stale processes |
+| `ModuleNotFoundError: flutter_dash` | Run `pip install -e .` from the repo root |
+| Dashboard shows "Coming Soon" | Check `hub/hub_config.py` — set `"status": "live"` |
+| Theme not carrying over to dashboard | Make sure `"internal": True` is set in hub_config |
+| Search bar not filtering live | Hard-refresh the browser (`Ctrl+Shift+R`) to reload JS |
