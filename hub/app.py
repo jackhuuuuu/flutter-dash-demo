@@ -39,6 +39,9 @@ HUB_PAGE_ICON = "🏠"
 LOCAL_BASE_URL = "http://localhost"
 DATABRICKS_BASE_URL = os.environ.get("DATABRICKS_APPS_BASE_URL", "")
 
+# Auto-detect Streamlit Cloud: the container runs as user "appuser" with HOME=/home/appuser
+_IS_CLOUD = os.environ.get("HOME") == "/home/appuser"
+
 
 # ═════════════════════════════════════════════════════════════════════════════
 # HELPERS
@@ -48,17 +51,22 @@ def _get_app_url(app: dict, theme: str) -> str:
     """
     Build the launch URL for an app.
 
-    - If the app has a "url" key, use it directly (external apps).
-    - If running on Databricks (DATABRICKS_BASE_URL is set), build from that.
-    - Otherwise, build a localhost URL using the app's local_port.
+    Priority:
+    1. External apps with a fixed "url" key → use as-is.
+    2. Databricks (DATABRICKS_BASE_URL env var set) → build from base URL.
+    3. Streamlit Cloud (_IS_CLOUD) → use app's "cloud_url" if present.
+    4. Local dev → http://localhost:<local_port>.
 
-    The current theme is appended as a query parameter for internal apps,
-    so dashboards inherit the user's chosen theme from the hub.
+    The current theme is appended as a query parameter for internal apps.
     """
     if "url" in app:
-        base = app["url"]
-    elif DATABRICKS_BASE_URL:
+        # External / fixed-URL apps (e.g. third-party tools)
+        return app["url"]
+
+    if DATABRICKS_BASE_URL:
         base = f"{DATABRICKS_BASE_URL}/{app['app_path']}"
+    elif _IS_CLOUD and app.get("cloud_url"):
+        base = app["cloud_url"]
     else:
         base = f"{LOCAL_BASE_URL}:{app['local_port']}"
 
@@ -227,23 +235,31 @@ with _col_theme:
         st.session_state.theme = "light" if _is_dark else "dark"
         st.rerun()
 
-# Inject JS for live search-as-you-type (Streamlit text_input only commits on Enter/blur)
+# Inject JS for live search-as-you-type
+# Streamlit text_input only commits on Enter/blur, so we debounce keystroke
+# events and trigger a blur+refocus to submit the value while keeping focus.
 components.html("""
 <script>
 (function() {
     const doc = window.parent.document;
     function attach() {
-        const el = doc.querySelector('.stTextInput input');
-        if (!el || el._live) return;
-        el._live = true;
-        let t;
-        el.addEventListener('input', function() {
-            clearTimeout(t);
-            t = setTimeout(() => {
-                this.dispatchEvent(new KeyboardEvent('keydown', {
-                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
-                }));
-            }, 200);
+        const inputs = doc.querySelectorAll('input[aria-label="Search apps"]');
+        inputs.forEach(function(el) {
+            if (el._live) return;
+            el._live = true;
+            let t;
+            el.addEventListener('input', function() {
+                clearTimeout(t);
+                const self = this;
+                t = setTimeout(function() {
+                    const pos = self.selectionStart;
+                    self.blur();
+                    setTimeout(function() {
+                        self.focus();
+                        self.setSelectionRange(pos, pos);
+                    }, 30);
+                }, 250);
+            });
         });
     }
     attach();
