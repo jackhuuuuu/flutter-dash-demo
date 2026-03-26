@@ -12,7 +12,7 @@ import pandas as pd
 from flutter_dash.components import pie_chart, waterfall_chart, section_title
 from flutter_dash.formatters import fmt_currency
 
-from dashboards.analytics.config import METRIC_DRIVERS
+from config import METRIC_DRIVERS
 
 
 def render_additional_charts(

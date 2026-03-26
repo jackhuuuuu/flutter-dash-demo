@@ -1,6 +1,6 @@
 # dashboards/analytics/config.py
 """
-Configuration for the Flutter Analytics dashboard.
+Configuration for the Group Executive Report dashboard.
 
 This file contains all dashboard-specific settings:
   - Page config (title, icon)
@@ -17,9 +17,9 @@ from flutter_dash.helpers import MetricDef
 from flutter_dash.formatters import fmt_currency, fmt_pct
 
 # ── Page settings ─────────────────────────────────────────────────────────────
-PAGE_TITLE = "Flutter Analytics"
+PAGE_TITLE = "Group Executive Report"
 PAGE_ICON = "📊"
-DASHBOARD_HEADING = "Performance Dashboard"
+DASHBOARD_HEADING = "Group Executive Report"
 DASHBOARD_SUBTITLE = "Multi-brand | Multi-product | TY vs LY vs Budget"
 
 # ── Metric definitions ────────────────────────────────────────────────────────

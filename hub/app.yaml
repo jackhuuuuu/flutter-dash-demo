@@ -1,0 +1,20 @@
+# Databricks Apps configuration for FBI Hub.
+# This file is detected by the CI/CD pipeline (detect-changes job)
+# to trigger deployment when hub/ files change.
+#
+# Docs: https://docs.databricks.com/en/apps/index.html
+
+command:
+  - "streamlit"
+  - "run"
+  - "app.py"
+  - "--server.port"
+  - "8000"
+  - "--server.headless"
+  - "true"
+
+env:
+  # Override this in production to point to the Databricks Apps base URL
+  # so the hub can generate correct links to other apps.
+  - name: "DATABRICKS_APPS_BASE_URL"
+    value: ""

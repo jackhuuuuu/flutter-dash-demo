@@ -444,7 +444,7 @@ def pie_chart(
             line=dict(color=tokens.bg_surface, width=2),
         ),
         textinfo="percent+label",
-        textfont=dict(size=11, family=tokens.font_primary),
+        textfont=dict(size=11, family=tokens.font_primary, color=tokens.text_primary),
         customdata=formatted_vals,
         hovertemplate=(
             "<b>%{label}</b><br>"

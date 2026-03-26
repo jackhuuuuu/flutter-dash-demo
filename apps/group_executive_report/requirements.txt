@@ -1,0 +1,6 @@
+# Group Executive Report requirements.
+# '.' installs flutter_dash from the repo root pyproject.toml
+.
+streamlit>=1.32.0
+pandas>=2.0.0
+plotly>=5.18.0

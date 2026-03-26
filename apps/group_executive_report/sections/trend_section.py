@@ -12,7 +12,7 @@ from flutter_dash.helpers import MetricDef, SeriesStyle
 from flutter_dash.data.aggregation import daily_weighted_average, get_drivers_daily
 from flutter_dash.data.filters import filter_df
 
-from dashboards.analytics.config import DATE_COL, METRIC_DRIVERS
+from config import DATE_COL, METRIC_DRIVERS
 
 
 def render_trend_section(

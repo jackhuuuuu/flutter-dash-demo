@@ -8,6 +8,7 @@ Databricks Unity Catalog (production).  Change DATA_SOURCE to switch.
 
 import streamlit as st
 import pandas as pd
+from pathlib import Path
 
 from flutter_dash.data.loader import get_loader
 
@@ -16,8 +17,10 @@ from flutter_dash.data.loader import get_loader
 #   DATA_SOURCE = "databricks"
 #   LOADER_KWARGS = {"catalog": "flutter_analytics", "schema": "gold", "table": "daily_performance"}
 
+_DIR = Path(__file__).parent
+
 DATA_SOURCE = "csv"
-LOADER_KWARGS = {"file_path": "sample_data.csv"}
+LOADER_KWARGS = {"file_path": _DIR / "sample_data.csv"}
 
 
 @st.cache_data

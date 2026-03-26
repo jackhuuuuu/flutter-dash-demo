@@ -43,7 +43,7 @@ def base_layout(tokens: ThemeTokens, height: int = 350, show_legend: bool = True
             y=1.02,
             xanchor="right",
             x=1,
-            font=dict(size=11),
+            font=dict(size=11, color=tokens.text_primary),
             bgcolor="rgba(0,0,0,0)",
             visible=show_legend,
         ),

@@ -8,7 +8,7 @@ import pandas as pd
 
 from flutter_dash.components import data_table, section_title
 
-from dashboards.analytics.config import TABLE_METRICS, TABLE_GROUP_BY
+from config import TABLE_METRICS, TABLE_GROUP_BY
 
 
 def render_detail_table(

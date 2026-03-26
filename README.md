@@ -1,141 +1,207 @@
-# Flutter Dash
+# FBI Hub — Flutter Financial BI Platform
 
-Reusable Streamlit dashboard framework for Flutter UK&I finance reporting.
+Multi-app dashboard platform for Flutter UK&I, powered by Streamlit and Databricks Apps.
 
 ## What is this?
 
-`flutter_dash` is a Python package that provides:
+This repo contains the **FBI Hub** (a landing page) and individual dashboard/app projects,
+all sharing the `flutter_dash` Python package for consistent theming, components, and data utilities.
 
-- **Theme system** — consistent dark/light palettes with one-call setup
-- **Component library** — KPI cards, line/bar/pie/waterfall charts, data tables, sidebar builder
-- **Data layer** — date helpers, generic filtering, metric aggregation (sum + weighted avg)
-- **Integrations** — Databricks Unity Catalog connector + Genie AI chat (stubs ready)
-- **Finance conventions** — currency formatting, variance analysis (YoY, vs Budget), signed deltas
+Each app is **independently deployable** as a Databricks App — if one app has an issue,
+the others keep running. The hub links them together with search, theming, and discoverability.
 
-## Quick Start
+---
 
-### 1. Install
+## Repo Structure
+
+```
+├── flutter_dash/                        # Shared package (pip-installable)
+│   ├── theme/                           #   Palettes, CSS, Plotly layouts
+│   ├── components/                      #   KPI cards, charts, tables, sidebar
+│   ├── data/                            #   Filtering, aggregation, loaders
+│   ├── integrations/                    #   Databricks connector, Genie AI
+│   ├── formatters.py                    #   fmt_currency, fmt_pct, fmt_number
+│   └── helpers.py                       #   MetricDef, Comparison, SeriesStyle
+│
+├── hub/                                 # FBI Hub (Databricks App #1)
+│   ├── app.py                           #   Landing page
+│   ├── hub_config.py                    #   App registry (add new apps here)
+│   ├── app.yaml                         #   Databricks Apps config
+│   ├── assets/flutter_logo.png          #   Flutter logo
+│   └── requirements.txt
+│
+├── apps/                                # Dashboard apps (one folder = one app)
+│   └── group_executive_report/          # Group Executive Report (App #2)
+│       ├── app.py                       #   Dashboard entry point
+│       ├── config.py                    #   Metrics, drivers, dimensions
+│       ├── data_loader.py               #   CSV / Databricks loader config
+│       ├── sections/                    #   Page sections (header, KPIs, charts)
+│       ├── sample_data.csv              #   Dev data (not used in production)
+│       ├── app.yaml                     #   Databricks Apps config
+│       └── requirements.txt
+│
+├── scripts/
+│   └── run_local.ps1                    # Start all apps locally
+│
+├── pyproject.toml                       # flutter_dash package definition
+└── .gitignore
+```
+
+---
+
+## Quick Start (Local Development)
+
+### 1. Clone and install
 
 ```bash
-# From GitHub (private repo)
-pip install git+https://github.com/YOUR_ORG/flutter-dash.git
+git clone https://github.com/jackhuuuuu/flutter-dash-demo.git
+cd flutter-dash-demo
 
-# Or for local development (editable install)
+# Create a virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1   # Windows
+# source .venv/bin/activate    # macOS/Linux
+
+# Install flutter_dash in editable mode
 pip install -e .
 ```
 
-### 2. Create a Dashboard
+### 2. Run all apps
 
-Copy `dashboards/analytics/` as a template:
-
-```
-my_new_dashboard/
-├── config.py          # Define YOUR metrics, drivers, dimensions
-├── data_loader.py     # Point to YOUR data source (CSV or Databricks)
-├── sections/          # Build YOUR page sections
-│   ├── kpi_section.py
-│   ├── trend_section.py
-│   └── ...
-└── app.py             # ~60 line orchestrator
+```powershell
+# Start FBI Hub (port 8501) and Group Executive Report (port 8502)
+.\scripts\run_local.ps1
 ```
 
-### 3. Edit `config.py`
+Or run individually:
 
-Define your metrics using `MetricDef`:
+```powershell
+cd hub
+streamlit run app.py --server.port 8501
+
+# In a separate terminal:
+cd apps/group_executive_report
+streamlit run app.py --server.port 8502
+```
+
+### 3. Open in browser
+
+- **FBI Hub**: http://localhost:8501
+- **Group Executive Report**: http://localhost:8502
+
+---
+
+## Creating a New Dashboard
+
+### 1. Copy the template
+
+```powershell
+Copy-Item -Recurse apps/group_executive_report apps/my_new_dashboard
+```
+
+### 2. Edit `config.py`
+
+Define your metrics, dimensions, and drivers:
 
 ```python
 from flutter_dash.helpers import MetricDef
 from flutter_dash.formatters import fmt_currency, fmt_pct
+
+PAGE_TITLE = "My New Dashboard"
+DASHBOARD_HEADING = "My New Dashboard"
 
 REVENUE = MetricDef(
     label="Revenue",
     ty_col="revenue",           # Column name in your data
     ly_col="revenue_ly",
     bud_col="revenue_budget",
-    formatter=fmt_currency,     # How to display it
-)
-
-MARGIN = MetricDef(
-    label="Margin %",
-    ty_col="margin",
-    ly_col="margin_ly",
-    bud_col="margin_budget",
-    formatter=fmt_pct,
-    is_pct=True,                # Uses weighted average, not sum
-    weight_col="stakes",        # Weight column for averaging
+    formatter=fmt_currency,
 )
 ```
 
-### 4. Edit `data_loader.py`
+### 3. Edit `data_loader.py`
 
 ```python
 # For local CSV development:
 DATA_SOURCE = "csv"
-LOADER_KWARGS = {"file_path": "my_data.csv"}
+LOADER_KWARGS = {"file_path": "sample_data.csv"}
 
-# For Databricks Apps production:
-DATA_SOURCE = "databricks"
-LOADER_KWARGS = {
-    "catalog": "my_catalog",
-    "schema": "gold",
-    "table": "daily_performance",
-}
+# For Databricks production:
+# DATA_SOURCE = "databricks"
+# LOADER_KWARGS = {"catalog": "my_catalog", "schema": "gold", "table": "my_table"}
 ```
 
-### 5. Write `app.py`
+### 4. Register in the hub
+
+Add your app to `hub/hub_config.py`:
 
 ```python
-import streamlit as st
-from flutter_dash.theme import apply_theme
-from flutter_dash.theme.palettes import FLUTTER_DARK
-
-apply_theme(st, FLUTTER_DARK, page_title="My Dashboard")
-
-df = load_data()
-selections = build_sidebar(df)
-df_filtered = filter_df(df, ...)
-
-render_kpi_section(df_filtered, ...)
-render_trend_section(df, ...)
+{
+    "id": "my_new_dashboard",
+    "title": "My New Dashboard",
+    "description": "What this dashboard does.",
+    "icon": "📈",
+    "section": "dashboards",
+    "status": "live",
+    "local_port": 8503,                    # Pick an unused port
+    "app_path": "apps/my_new_dashboard",
+    "internal": True,
+},
 ```
 
-### 6. Run
+### 5. Create `app.yaml`
 
-```bash
-python -m streamlit run app.py
+Copy from an existing app — this tells Databricks how to run it
+and lets the CI/CD pipeline detect changes.
+
+### 6. Run and test
+
+```powershell
+cd apps/my_new_dashboard
+streamlit run app.py --server.port 8503
 ```
 
-## Project Structure
+---
+
+## Deployment (Databricks Apps via GitHub Actions)
+
+Each app is deployed independently via the CI/CD pipeline:
+
+1. **Change detection** — the pipeline scans for folders containing `app.yaml`
+   and only deploys apps whose files have changed.
+2. **Workspace upload** — app files are uploaded to a Databricks workspace folder.
+3. **App deploy** — `databricks apps deploy` creates/updates the Databricks App.
+4. **Permissions** — access control is set per-app (teams, service principals).
+
+The `flutter_dash` package is installed via `requirements.txt` in each app.
+For production, point to the package from your private index or Git URL:
 
 ```
-flutter_dash/               # The shared package (pip-installable)
-├── theme/                   # Palettes, CSS, Plotly layouts
-├── components/              # KPI cards, charts, tables, sidebar
-├── data/                    # Filtering, aggregation, loaders
-├── integrations/            # Databricks, Genie AI
-├── formatters.py            # fmt_currency, fmt_pct, fmt_number
-└── helpers.py               # Dataclasses: MetricDef, Comparison, SeriesStyle
-
-dashboards/                  # Dashboard instances (not part of the package)
-└── analytics/               # The analytics dashboard
-    ├── config.py            # Metric definitions, drivers, dimensions
-    ├── data_loader.py       # CSV / Databricks loader config
-    └── sections/            # Page sections (header, KPIs, charts, table)
+# In each app's requirements.txt:
+flutter-dash @ git+https://github.com/jackhuuuuu/flutter-dash-demo.git
 ```
+
+To add a new app to the deployment pipeline, add a step in your workflow YAML
+following the same pattern as existing apps (workspace upload → deploy → permissions).
+
+---
 
 ## Key Concepts
 
-### MetricDef
-Tells the framework about a metric: what columns to use, how to format it, whether it's a percentage.
+| Concept | Description |
+|---------|-------------|
+| **MetricDef** | Defines a metric: column names for TY/LY/Budget, formatter, percentage flag |
+| **Comparison** | Variance row (vs LY, vs Budget) displayed on KPI cards |
+| **SeriesStyle** | Chart series appearance (label, colour, dash). Auto-fills from theme if omitted |
+| **SidebarBuilder** | Composable sidebar: `.add_header()`, `.add_period_picker()`, `.add_multiselect()`, `.render()` |
+| **ThemeTokens** | Complete visual identity: backgrounds, text, semantic colours, chart palette |
 
-### Comparison
-Represents a variance row (vs LY, vs Budget). KPI cards accept a list of these.
+## Theme System
 
-### SeriesStyle
-Controls how a chart series looks (label, colour, dash pattern). Colours auto-fill from the theme if omitted.
-
-### SidebarBuilder
-Composable sidebar — chain `.add_header()`, `.add_period_picker()`, `.add_multiselect()`, `.render()`.
+- Default theme: **Flutter Light** (`FLUTTER_LIGHT`)
+- Dark theme: **Flutter Dark** (`FLUTTER_DARK`)
+- Theme toggle available in the hub and each dashboard sidebar
+- Hub passes theme to dashboards via URL parameter `?theme=light|dark`
 
 ## Dependencies
 

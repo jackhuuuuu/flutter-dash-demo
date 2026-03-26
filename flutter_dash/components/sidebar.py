@@ -64,6 +64,11 @@ class SidebarBuilder:
         self._widgets.append(("header", {"title": title, "subtitle": subtitle}))
         return self
 
+    def add_theme_toggle(self) -> "SidebarBuilder":
+        """Add a light/dark theme toggle right after the header."""
+        self._widgets.append(("theme_toggle", {}))
+        return self
+
     def add_period_picker(
         self,
         options: List[str] = None,
@@ -169,6 +174,18 @@ class SidebarBuilder:
                         """,
                         unsafe_allow_html=True,
                     )
+
+                elif widget_type == "theme_toggle":
+                    _is_dark = self._st.session_state.get("theme") == "dark"
+                    _icon = "☀️" if _is_dark else "🌙"
+                    if self._st.button(
+                        _icon,
+                        key="theme_toggle",
+                    ):
+                        self._st.session_state.theme = (
+                            "light" if _is_dark else "dark"
+                        )
+                        self._st.rerun()
 
                 elif widget_type == "period":
                     period = self._st.selectbox(

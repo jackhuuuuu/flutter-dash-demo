@@ -11,7 +11,7 @@ from flutter_dash.helpers import Comparison, MetricDef
 from flutter_dash.data.aggregation import aggregate_metrics
 from flutter_dash.formatters import format_comparison
 
-from dashboards.analytics.config import KPI_METRICS, METRIC_DRIVERS
+from config import KPI_METRICS, METRIC_DRIVERS
 
 
 def render_kpi_section(
