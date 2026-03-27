@@ -1,6 +1,9 @@
-# dashboards/analytics/sections/brand_breakdown.py
+# sections/brand_breakdown.py
 """
-Grouped bar chart section — metric breakdown by brand.
+Grouped bar chart section — metric breakdown by brand or product.
+
+The grouping dimension is controlled by the sidebar "Chart Grouping"
+dropdown, so all charts update together.
 """
 
 import streamlit as st
@@ -17,9 +20,10 @@ def render_brand_breakdown(
     period: str,
     brand_label: str,
     product_label: str,
+    grouping: str = "brand",
 ) -> None:
     """
-    Render a grouped bar chart showing the selected metric by brand.
+    Render a grouped bar chart showing the selected metric by brand or product.
 
     Parameters
     ----------
@@ -29,9 +33,14 @@ def render_brand_breakdown(
         The selected chart metric.
     period, brand_label, product_label : str
         Display labels.
+    grouping : str
+        Dimension column to group by ("brand" or "product").
     """
+    dim = grouping
+    dim_label = dim.title()
+
     section_title(
-        f"Brand Breakdown — {metric_def.label}",
+        f"{dim_label} Breakdown — {metric_def.label}",
         f"{period} · {brand_label} · {product_label} · LY vs TY vs Budget",
     )
 
@@ -42,12 +51,12 @@ def render_brand_breakdown(
     y_cols = [metric_def.ty_col, metric_def.ly_col, metric_def.bud_col]
 
     if metric_def.is_pct and metric_def.weight_col:
-        # Weighted average per brand
-        brands = sorted(df_period["brand"].unique())
+        # Weighted average per dimension
+        groups = sorted(df_period[dim].unique())
         rows = []
-        for brand in brands:
-            brand_df = df_period[df_period["brand"] == brand]
-            row = {"brand": brand}
+        for grp in groups:
+            grp_df = df_period[df_period[dim] == grp]
+            row = {dim: grp}
 
             weight_cols = {
                 metric_def.ty_col: metric_def.weight_col,
@@ -56,17 +65,17 @@ def render_brand_breakdown(
             }
 
             for val_col, w_col in weight_cols.items():
-                if w_col not in brand_df.columns:
+                if w_col not in grp_df.columns:
                     w_col = metric_def.weight_col
-                row[val_col] = weighted_average(brand_df, val_col, w_col)
+                row[val_col] = weighted_average(grp_df, val_col, w_col)
 
             rows.append(row)
         bar_agg = pd.DataFrame(rows)
     else:
-        # Simple sum per brand
+        # Simple sum per dimension
         bar_agg = (
             df_period
-            .groupby("brand")[y_cols]
+            .groupby(dim)[y_cols]
             .sum()
             .reset_index()
         )
@@ -81,11 +90,11 @@ def render_brand_breakdown(
 
     fig = bar_chart(
         df=bar_agg,
-        x_col="brand",
+        x_col=dim,
         y_cols=y_cols,
         series_styles=styles,
         formatter=metric_def.formatter,
-        title=f"{metric_def.label} by Brand ({period})",
+        title=f"{metric_def.label} by {dim_label} ({period})",
         barmode="group",
     )
     st.plotly_chart(fig, width="stretch")

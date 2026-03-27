@@ -1,4 +1,4 @@
-# dashboards/analytics/config.py
+# config.py
 """
 Configuration for the Group Executive Report dashboard.
 

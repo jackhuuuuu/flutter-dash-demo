@@ -1,4 +1,4 @@
-# dashboards/analytics/sections/header.py
+# sections/header.py
 """
 Dashboard header — shows title, active filters, and data-as-of date.
 """

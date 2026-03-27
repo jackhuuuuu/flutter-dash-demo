@@ -1,19 +1,24 @@
-# app.py
+# apps/group_executive_report/app.py
 """
 Group Executive Report — Flutter UK&I
 Multi-brand | Multi-product | TY vs LY vs Budget
 
 This is the main orchestrator for the Group Executive Report dashboard.
-It uses:
-  - flutter_dash package for theme, components, data utilities
-  - config.py for this dashboard's settings
-  - sections/ for each dashboard section
+It wires together:
+  - flutter_dash package   → theme, components, data utilities
+  - config.py              → metric definitions, dimension mappings
+  - data_loader.py         → CSV or Databricks data source
+  - sections/              → each visual section of the dashboard
+
+Sidebar selections flow into each section as parameters:
+  - period, period_start, period_end  → date filtering
+  - Brand / Product multiselects      → dimension filtering
+  - sel_metric (MetricDef)            → which metric charts display
+  - sel_grouping ("brand"/"product")  → chart x-axis dimension
 
 Run locally:
     cd apps/group_executive_report
     streamlit run app.py --server.port 8502
-
-In production, this is deployed as its own Databricks App.
 """
 
 import streamlit as st
@@ -70,8 +75,7 @@ for col, label in DIMENSIONS.items():
     sidebar.add_multiselect(label, values, placeholder=f"All {label}s")
 
 sidebar.add_metric_picker(list(CHART_METRIC_OPTIONS.keys()))
-sidebar.add_divider()
-sidebar.add_footer(f"Data as of {max_date}")
+sidebar.add_grouping_picker(["Brand", "Product"])
 
 selections = sidebar.render()
 
@@ -81,6 +85,7 @@ period_start = selections["period_start"]
 period_end = selections["period_end"]
 sel_metric_label = selections["metric"]
 sel_metric = CHART_METRIC_OPTIONS[sel_metric_label]
+sel_grouping = selections.get("grouping", "brand")
 
 # Build dimension filter kwargs and labels
 dim_filters = {}
@@ -109,8 +114,8 @@ render_trend_section(
     brand_label, product_label, dim_filters,
 )
 
-render_brand_breakdown(df_period, sel_metric, period, brand_label, product_label)
+render_brand_breakdown(df_period, sel_metric, period, brand_label, product_label, sel_grouping)
+
+render_additional_charts(df_period, sel_metric, period, brand_label, product_label, sel_grouping)
 
 render_detail_table(df_period, period, brand_label, product_label)
-
-render_additional_charts(df_period, period, brand_label, product_label)

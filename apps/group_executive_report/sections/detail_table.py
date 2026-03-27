@@ -1,4 +1,4 @@
-# dashboards/analytics/sections/detail_table.py
+# sections/detail_table.py
 """
 Detailed breakdown table section — Brand → Product hierarchy.
 """

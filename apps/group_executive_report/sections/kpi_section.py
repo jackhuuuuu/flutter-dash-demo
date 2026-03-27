@@ -1,4 +1,4 @@
-# dashboards/analytics/sections/kpi_section.py
+# sections/kpi_section.py
 """
 KPI cards section — renders the top-level metric cards.
 """

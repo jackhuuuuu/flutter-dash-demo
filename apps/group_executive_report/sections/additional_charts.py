@@ -1,58 +1,116 @@
-# dashboards/analytics/sections/additional_charts.py
+# sections/additional_charts.py
 """
 Additional chart examples — pie and waterfall charts.
 
-Demonstrates other chart types available in the flutter_dash framework
-using the same sample data.
+The pie chart reflects the selected primary metric and uses the
+sidebar "Chart Grouping" dropdown for its dimension. The waterfall
+shows a Net Revenue LY-to-TY bridge.
 """
 
 import streamlit as st
 import pandas as pd
 
-from flutter_dash.components import pie_chart, waterfall_chart, section_title
+from flutter_dash.components import pie_chart, waterfall_chart, section_title, multi_section_title
 from flutter_dash.formatters import fmt_currency
+from flutter_dash.helpers import MetricDef
+from flutter_dash.data.aggregation import weighted_average
 
 from config import METRIC_DRIVERS
 
 
 def render_additional_charts(
     df_period: pd.DataFrame,
+    metric_def: MetricDef,
     period: str,
     brand_label: str,
     product_label: str,
+    grouping: str = "product",
 ) -> None:
     """
     Render additional chart examples beneath the main dashboard sections.
 
     Includes:
-      1. Revenue Mix by Product (donut chart)
+      1. Metric composition donut chart (grouped by sidebar selection)
       2. Net Revenue Bridge — LY to TY (waterfall chart)
+
+    The pie chart respects the primary metric selection from the sidebar.
+    For percentage metrics (e.g. Margin %), it shows a weighted-average
+    breakdown instead of a sum-based composition.
+
+    Parameters
+    ----------
+    df_period : DataFrame
+        Filtered data for the selected period.
+    metric_def : MetricDef
+        The selected chart metric.
+    period, brand_label, product_label : str
+        Display labels.
+    grouping : str
+        Dimension column to group by ("brand" or "product").
     """
     if df_period.empty:
         return
 
-    # ── 1. Revenue Mix Donut ──────────────────────────────────────────────────
-    section_title(
-        "Revenue Mix by Product",
-        f"{period} · {brand_label} · {product_label} · TY Net Revenue composition",
+    dim = grouping
+    dim_label = dim.title()
+    is_pct_metric = metric_def.is_pct
+
+    # ── Section titles — one per chart, matching column layout ────────────────
+    if is_pct_metric:
+        pie_title_text = f"{metric_def.label} by {dim_label}"
+        pie_subtitle = (
+            f"{period} · {brand_label} · {product_label} · "
+            f"Weighted average {metric_def.label.lower()}"
+        )
+    else:
+        pie_title_text = f"{metric_def.label} Mix by {dim_label}"
+        pie_subtitle = (
+            f"{period} · {brand_label} · {product_label} · "
+            f"TY {metric_def.label} composition"
+        )
+
+    multi_section_title(
+        [
+            (pie_title_text, pie_subtitle),
+            ("Net Revenue Bridge", f"{period} · LY to TY variance drivers"),
+        ],
+        col_ratios=[3, 2],
     )
 
-    product_revenue = (
-        df_period
-        .groupby("product")["total_net_revenue"]
-        .sum()
-        .reset_index()
-        .sort_values("total_net_revenue", ascending=False)
-    )
-
+    # ── 1. Metric Composition Donut ───────────────────────────────────────────
     col1, col2 = st.columns([3, 2])
     with col1:
+        if is_pct_metric and metric_def.weight_col:
+            # For percentage metrics, show weighted average per group
+            groups = sorted(df_period[dim].unique())
+            rows = []
+            for grp in groups:
+                grp_df = df_period[df_period[dim] == grp]
+                w_avg = weighted_average(
+                    grp_df, metric_def.ty_col, metric_def.weight_col,
+                )
+                rows.append({dim: grp, metric_def.ty_col: w_avg})
+            pie_data = pd.DataFrame(rows).sort_values(
+                metric_def.ty_col, ascending=False,
+            )
+            chart_title = f"{metric_def.label} by {dim_label} ({period})"
+        else:
+            # Sum-based composition for absolute metrics
+            pie_data = (
+                df_period
+                .groupby(dim)[metric_def.ty_col]
+                .sum()
+                .reset_index()
+                .sort_values(metric_def.ty_col, ascending=False)
+            )
+            chart_title = f"{metric_def.label} Share by {dim_label} ({period})"
+
         fig_pie = pie_chart(
-            df=product_revenue,
-            label_col="product",
-            value_col="total_net_revenue",
-            formatter=fmt_currency,
-            title=f"Net Revenue Share by Product ({period})",
+            df=pie_data,
+            label_col=dim,
+            value_col=metric_def.ty_col,
+            formatter=metric_def.formatter,
+            title=chart_title,
             height=400,
             hole=0.45,
         )

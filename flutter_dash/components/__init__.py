@@ -10,7 +10,7 @@ Import any component directly:
 """
 
 from flutter_dash.components.kpi_card import kpi_card          # noqa: F401
-from flutter_dash.components.section_title import section_title  # noqa: F401
+from flutter_dash.components.section_title import section_title, multi_section_title  # noqa: F401
 from flutter_dash.components.charts import (                    # noqa: F401
     line_chart,
     bar_chart,

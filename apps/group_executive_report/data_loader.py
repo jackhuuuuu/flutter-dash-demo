@@ -1,4 +1,4 @@
-# dashboards/analytics/data_loader.py
+# data_loader.py
 """
 Data loading for the Flutter Analytics dashboard.
 

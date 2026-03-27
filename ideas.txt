@@ -33,10 +33,10 @@ dashboards. Grouped by effort level. Pick up as needed.
    - Finance users expect Excel-like tables.
    - pip install streamlit-aggrid, then swap in data_table.py.
 
-5. Light / Dark Theme Toggle
+5. Light / Dark Theme Toggle  ✅ DONE
    - Already have FLUTTER_LIGHT and FLUTTER_DARK palettes.
-   - Add a toggle in the sidebar (SidebarBuilder) that switches
-     between them and stores preference in session_state.
+   - Toggle in the sidebar switches between them via session_state.
+   - Theme passed to child apps via URL query param.
 
 
 ------------------------------------------------------------------------
@@ -78,21 +78,19 @@ dashboards. Grouped by effort level. Pick up as needed.
       add a currency selector that applies FX rates.
     - Store FX rates in a config or load from Unity Catalog.
 
-12. Variance Waterfall Charts
-    - Use the existing waterfall_chart component to show:
-      Budget → Volume impact → Price impact → Mix impact → Actual.
-    - Very powerful for finance variance analysis presentations.
+12. Variance Waterfall Charts  ✅ DONE
+    - Waterfall chart component built and integrated.
+    - Shows LY → driver impacts → TY bridge for Net Revenue.
 
 
 ------------------------------------------------------------------------
   LARGER INITIATIVES  (plan as projects)
 ------------------------------------------------------------------------
 
-13. Dashboard Gallery / Launcher
-    - A home page that lists all available dashboards (analytics, P&L,
-      trading, etc.) with descriptions and links.
-    - Each dashboard is a separate dashboards/ folder.
-    - Single entry point: app.py routes to the selected dashboard.
+13. Dashboard Gallery / Launcher  ✅ DONE
+    - FBI Hub built as a standalone Streamlit app (hub/app.py).
+    - Tile-based launcher with search, theming, and app registry.
+    - Each dashboard is a separate apps/ folder with its own config.
 
 14. Row-Level Security
     - When running on Databricks, restrict data visibility by user/role

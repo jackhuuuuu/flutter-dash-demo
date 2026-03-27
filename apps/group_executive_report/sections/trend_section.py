@@ -1,4 +1,4 @@
-# dashboards/analytics/sections/trend_section.py
+# sections/trend_section.py
 """
 Daily trend line chart section.
 """

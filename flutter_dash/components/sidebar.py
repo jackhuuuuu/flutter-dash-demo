@@ -5,31 +5,34 @@ SidebarBuilder — composable sidebar for any dashboard.
 Instead of hardcoding sidebar layout, use SidebarBuilder to add
 widgets one by one. Each dashboard picks the widgets it needs.
 
+Available widgets:
+  - add_header()          → branded title with subtitle
+  - add_theme_toggle()    → light/dark mode switch
+  - add_period_picker()   → Yesterday / WTD / MTD selector with auto dates
+  - add_multiselect()     → multi-select filter (Brand, Product, etc.)
+  - add_metric_picker()   → single-select for primary chart metric
+  - add_grouping_picker() → single-select for chart dimension grouping
+  - add_divider()         → horizontal line separator
+  - add_footer()          → small text at the bottom
+
 Usage:
-    sb = SidebarBuilder(st, tokens)
+    sb = SidebarBuilder(st)
     sb.add_header("My Dashboard", "Performance Report")
+    sb.add_theme_toggle()
     sb.add_period_picker()
     sb.add_multiselect("Brand", all_brands)
-    sb.add_metric_picker({"Revenue": ..., "Margin": ...})
-    sb.add_footer(f"Data as of {max_date}")
+    sb.add_metric_picker(["Revenue", "Stakes", "Margin %"])
+    sb.add_grouping_picker(["Brand", "Product"])
     selections = sb.render()
-
-    # selections is a dict:
-    # {
-    #   "period": "MTD",
-    #   "period_start": date(...),
-    #   "period_end": date(...),
-    #   "Brand": ["Brand A", "Brand B"],
-    #   "metric": "Revenue",
-    # }
 """
 
 import streamlit as st
-from datetime import date, timedelta
+from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
 from flutter_dash.theme import get_active_theme
 from flutter_dash.theme.tokens import ThemeTokens
+from flutter_dash.data.date_helpers import get_period_dates
 
 
 class SidebarBuilder:
@@ -131,6 +134,26 @@ class SidebarBuilder:
         }))
         return self
 
+    def add_grouping_picker(
+        self,
+        options: List[str] = None,
+        label: str = "Chart Grouping",
+    ) -> "SidebarBuilder":
+        """
+        Add a single-select dropdown for chart dimension grouping.
+
+        Controls which dimension (e.g. Brand or Product) is used to
+        group bar charts and pie charts. The selected value is returned
+        in results as "grouping".
+        """
+        if options is None:
+            options = ["Brand", "Product"]
+        self._widgets.append(("grouping_picker", {
+            "label": label,
+            "options": options,
+        }))
+        return self
+
     def add_divider(self) -> "SidebarBuilder":
         """Add a horizontal divider line."""
         self._widgets.append(("divider", {}))
@@ -194,7 +217,7 @@ class SidebarBuilder:
                         index=config["default_index"],
                     )
                     max_d = config.get("max_date") or date.today()
-                    start, end = self._calc_period_dates(period, max_d)
+                    start, end = get_period_dates(max_d, period)
                     results["period"] = period
                     results["period_start"] = start
                     results["period_end"] = end
@@ -226,6 +249,13 @@ class SidebarBuilder:
                     )
                     results["metric"] = selected
 
+                elif widget_type == "grouping_picker":
+                    selected = self._st.selectbox(
+                        config["label"],
+                        config["options"],
+                    )
+                    results["grouping"] = selected.lower()
+
                 elif widget_type == "divider":
                     self._st.markdown("---")
 
@@ -237,28 +267,3 @@ class SidebarBuilder:
                     )
 
         return results
-
-    # ── Internal: calculate period dates ──────────────────────────────────────
-    @staticmethod
-    def _calc_period_dates(period: str, max_date: date) -> Tuple[date, date]:
-        """
-        Convert a period label into start/end dates.
-
-        Supports: Yesterday, WTD (week-to-date), MTD (month-to-date).
-        Can be extended with QTD, YTD, etc.
-        """
-        if period == "Yesterday":
-            d = max_date - timedelta(days=1)
-            return d, d
-        elif period == "WTD":
-            start = max_date - timedelta(days=max_date.weekday())
-            return start, max_date
-        elif period == "QTD":
-            # Quarter start: month 1, 4, 7, or 10
-            q_month = ((max_date.month - 1) // 3) * 3 + 1
-            return max_date.replace(month=q_month, day=1), max_date
-        elif period == "YTD":
-            return max_date.replace(month=1, day=1), max_date
-        else:
-            # Default: MTD
-            return max_date.replace(day=1), max_date
