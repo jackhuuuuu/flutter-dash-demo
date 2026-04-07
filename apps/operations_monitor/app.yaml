@@ -1,0 +1,14 @@
+# Databricks Apps configuration for Operations Monitor.
+# This file is detected by the CI/CD pipeline (detect-changes job)
+# to trigger deployment when apps/operations_monitor/ files change.
+#
+# Docs: https://docs.databricks.com/en/apps/index.html
+
+command:
+  - "streamlit"
+  - "run"
+  - "app.py"
+  - "--server.port"
+  - "8000"
+  - "--server.headless"
+  - "true"

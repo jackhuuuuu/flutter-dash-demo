@@ -95,6 +95,20 @@ APPS = [
         "app_path": "apps/trading_dashboard",
         "internal": True,
     },
+    {
+        "id": "operations_monitor",
+        "title": "Operations Monitor",
+        "description": (
+            "Data quality check monitoring with pass/fail heatmaps, "
+            "failure lifecycle tracking, and resolution time analysis."
+        ),
+        "icon": "🔧",
+        "section": "dashboards",
+        "status": "live",
+        "local_port": 8505,
+        "app_path": "apps/operations_monitor",
+        "internal": True,
+    },
 
     # ── AI & Analytics Apps ───────────────────────────────────────────────────
     {

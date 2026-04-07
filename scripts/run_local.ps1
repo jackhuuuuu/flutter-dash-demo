@@ -11,6 +11,7 @@
 # Apps:
 #   FBI Hub                  → http://localhost:8501
 #   Group Executive Report   → http://localhost:8502
+#   Operations Monitor       → http://localhost:8505
 #
 # Press Ctrl+C to stop all apps.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +23,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 # Add new apps here: @{ Port = <number>; Name = "<display name>"; Path = "<relative path from repo root>" }
 $apps = @(
     @{ Port = 8501; Name = "FBI Hub";                 Path = "hub" },
-    @{ Port = 8502; Name = "Group Executive Report";  Path = "apps/group_executive_report" }
+    @{ Port = 8502; Name = "Group Executive Report";  Path = "apps/group_executive_report" },
+    @{ Port = 8505; Name = "Operations Monitor";      Path = "apps/operations_monitor" }
 )
 
 Write-Host ""

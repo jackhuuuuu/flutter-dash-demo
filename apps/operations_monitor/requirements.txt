@@ -1,0 +1,6 @@
+# Requirements for the Operations Monitor dashboard.
+# These are the same as the main project requirements.
+# Listed here for Databricks Apps deployment.
+streamlit>=1.30
+plotly>=5.18
+pandas>=2.0

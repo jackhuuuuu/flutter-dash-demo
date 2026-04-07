@@ -15,7 +15,8 @@ Available charts:
   - line_chart()      — multi-series line chart with optional driver tooltips
   - bar_chart()       — grouped or stacked bar chart
   - pie_chart()       — pie/donut chart for composition analysis
-  - waterfall_chart()  — bridge chart for variance/driver analysis
+  - waterfall_chart() — bridge chart for variance/driver analysis
+  - heatmap_chart()   — coloured grid for status/intensity across two dimensions
 """
 
 import plotly.graph_objects as go
@@ -559,6 +560,148 @@ def waterfall_chart(
         totals=dict(marker=dict(color=tokens.accent)),
         hovertemplate="<b>%{x}</b><br>%{text}<extra></extra>",
     ))
+
+    fig.update_layout(**layout)
+    return fig
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# HEATMAP CHART (status grid / intensity matrix)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def heatmap_chart(
+    z_values: List[List[float]],
+    x_labels: List[str],
+    y_labels: List[str],
+    text_values: Optional[List[List[str]]] = None,
+    colorscale: Optional[List] = None,
+    title: str = "",
+    height: int = 500,
+    zmin: Optional[float] = None,
+    zmax: Optional[float] = None,
+    show_colorbar: bool = True,
+    hover_template: Optional[str] = None,
+    tokens: Optional[ThemeTokens] = None,
+) -> go.Figure:
+    """
+    Heatmap chart for status grids or intensity matrices.
+
+    Great for showing:
+      - DQ check status per date (PASS/FAIL grid)
+      - Pipeline run durations across days
+      - Any 2D matrix where colour conveys status or magnitude
+
+    Parameters
+    ----------
+    z_values : list[list[float]]
+        2D matrix of numeric values. Each inner list is one row (y-axis).
+        For a status grid, use 1 = PASS, 0 = FAIL, -1 = no data.
+    x_labels : list[str]
+        Labels for the x-axis (e.g. dates). Length must match inner lists.
+    y_labels : list[str]
+        Labels for the y-axis (e.g. check names). Length must match outer list.
+    text_values : list[list[str]], optional
+        Custom text for each cell (shown in hover and optionally on the cell).
+        Same shape as z_values. If None, z_values are used.
+    colorscale : list, optional
+        Plotly colorscale. Each entry is [position, colour].
+        Example: [[0, "#FF4D6A"], [0.5, "#8BAFC4"], [1, "#00E5A0"]]
+        If None, a default FAIL→neutral→PASS scale is built from the theme.
+    title : str
+        Chart title.
+    height : int
+        Chart height in pixels. Default 500.
+    zmin, zmax : float, optional
+        Min/max values for the colour scale. Defaults to data range.
+    show_colorbar : bool
+        Whether to show the colour legend bar. Default True.
+    hover_template : str, optional
+        Custom Plotly hover template. If None, a default is used.
+    tokens : ThemeTokens, optional
+        Theme palette. Defaults to active theme.
+
+    Returns
+    -------
+    go.Figure
+        A Plotly figure ready to pass to st.plotly_chart().
+
+    Examples
+    --------
+    # Simple status grid (0 = FAIL, 1 = PASS):
+    fig = heatmap_chart(
+        z_values=[[1, 1, 0, 1], [1, 0, 0, 1]],
+        x_labels=["Mon", "Tue", "Wed", "Thu"],
+        y_labels=["Check A", "Check B"],
+        title="DQ Check Status",
+    )
+
+    # Custom colorscale for continuous data:
+    fig = heatmap_chart(
+        z_values=[[10, 25, 5], [30, 15, 20]],
+        x_labels=["Q1", "Q2", "Q3"],
+        y_labels=["Pipeline A", "Pipeline B"],
+        colorscale=[[0, "#00E5A0"], [1, "#FF4D6A"]],
+        title="Pipeline Duration (mins)",
+    )
+    """
+    if tokens is None:
+        tokens = get_active_theme()
+
+    # Default colorscale: FAIL (red) → neutral (grey) → PASS (green)
+    if colorscale is None:
+        colorscale = [
+            [0.0, tokens.negative],
+            [0.5, tokens.neutral],
+            [1.0, tokens.positive],
+        ]
+
+    layout = base_layout(tokens, height=height, show_legend=False)
+    layout["title"] = dict(
+        text=title,
+        font=dict(size=13, color=tokens.text_muted),
+        x=0.01,
+    )
+
+    # Increase left margin for long y-axis labels (e.g. check names)
+    layout.setdefault("margin", {})["l"] = 220
+
+    # Default hover template
+    if hover_template is None:
+        hover_template = (
+            "<b>%{y}</b><br>"
+            "%{x}<br>"
+            "%{text}<extra></extra>"
+        )
+
+    fig = go.Figure()
+    fig.add_trace(go.Heatmap(
+        z=z_values,
+        x=x_labels,
+        y=y_labels,
+        text=text_values if text_values else None,
+        texttemplate="%{text}" if text_values else None,
+        textfont=dict(size=10, family=tokens.font_mono, color=tokens.text_primary),
+        colorscale=colorscale,
+        zmin=zmin,
+        zmax=zmax,
+        showscale=show_colorbar,
+        colorbar=dict(
+            title="",
+            tickfont=dict(color=tokens.text_muted, size=10),
+            bgcolor="rgba(0,0,0,0)",
+            borderwidth=0,
+        ),
+        hovertemplate=hover_template,
+        xgap=2,
+        ygap=2,
+    ))
+
+    # Override axis settings for heatmap (no grid, categorical axes)
+    layout["xaxis"]["showgrid"] = False
+    layout["yaxis"]["showgrid"] = False
+    layout["xaxis"]["type"] = "category"
+    layout["yaxis"]["type"] = "category"
+    layout["yaxis"]["autorange"] = "reversed"
 
     fig.update_layout(**layout)
     return fig

@@ -17,17 +17,17 @@ The platform consists of:
 │  Tile-based launcher with search, light/dark theming, app registry │
 │                                                                     │
 │   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │
-│   │  Group Executive  │  │   P&L Dashboard  │  │ Trading Dashboard│ │
-│   │     Report ✅     │  │   (Coming Soon)  │  │   (Coming Soon)  │ │
-│   └────────┬─────────┘  └──────────────────┘  └──────────────────┘ │
-└────────────┼───────────────────────────────────────────────────────┘
+│   │  Group Executive  │  │   Operations     │  │   P&L Dashboard  │ │
+│   │     Report ✅     │  │   Monitor ✅     │  │   (Coming Soon)  │ │
+│   └────────┬─────────┘  └────────┬─────────┘  └──────────────────┘ │
+└────────────┼─────────────────────┼─────────────────────────────────┘
              │ uses
              ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                   flutter_dash (shared package)                     │
 │                                                                     │
 │  theme/        → Light & dark palettes, CSS, Plotly chart layouts   │
-│  components/   → KPI cards, line/bar/pie/waterfall charts, tables   │
+│  components/   → KPI cards, line/bar/pie/waterfall/heatmap charts    │
 │  data/         → Filters, aggregation, date helpers, data loaders   │
 │  integrations/ → Databricks connector, Genie AI (stubs)             │
 │  formatters.py → £1.23M, 12.50%, percentage-point formatting        │
@@ -50,7 +50,7 @@ The platform consists of:
 │   │   └── plotly.py                    #     Base Plotly chart layout from tokens
 │   ├── components/                      #   Reusable UI components
 │   │   ├── kpi_card.py                  #     Metric card with variance comparisons
-│   │   ├── charts.py                    #     Line, bar, pie, waterfall charts
+│   │   ├── charts.py                    #     Line, bar, pie, waterfall, heatmap charts
 │   │   ├── data_table.py               #     Hierarchical financial data table
 │   │   ├── section_title.py            #     Styled section headers
 │   │   └── sidebar.py                  #     Composable sidebar builder
@@ -85,6 +85,23 @@ The platform consists of:
 │       │   ├── brand_breakdown.py      #       Grouped bar chart
 │       │   ├── additional_charts.py    #       Pie chart + waterfall bridge
 │       │   └── detail_table.py         #       Hierarchical data table
+│       ├── app.yaml                     #     Databricks Apps config
+│       └── requirements.txt
+│
+│   └── operations_monitor/              #   Operations Monitor (DQ checks)
+│       ├── app.py                       #     Main orchestrator
+│       ├── config.py                    #     Column mappings, status values
+│       ├── data_loader.py              #     Data source config (CSV / Databricks)
+│       ├── checks_log_sample.csv       #     Sample DQ check results
+│       ├── sections/                    #     Visual sections of the dashboard
+│       │   ├── header.py               #       Title bar + filter summary
+│       │   ├── kpi_section.py          #       Operational health KPI cards
+│       │   ├── heatmap.py              #       Check × date status grid
+│       │   ├── trend_section.py        #       Daily pass/fail stacked bars
+│       │   ├── lifecycle_section.py    #       Revenue & EPM lifecycle donuts
+│       │   ├── resolution_section.py   #       Resolution time bar chart
+│       │   ├── detail_table.py         #       Active failures action table
+│       │   └── brand_breakdown.py      #       By brand/wallet grouped bars
 │       ├── app.yaml                     #     Databricks Apps config
 │       └── requirements.txt
 │
@@ -130,6 +147,7 @@ pip install -e .
 This starts:
 - **FBI Hub** → http://localhost:8501
 - **Group Executive Report** → http://localhost:8502
+- **Operations Monitor** → http://localhost:8505
 
 Press **Ctrl+C** to stop all apps.
 
@@ -143,6 +161,10 @@ streamlit run app.py --server.port 8501
 # Terminal 2 — Dashboard
 cd apps/group_executive_report
 streamlit run app.py --server.port 8502
+
+# Terminal 3 — Operations Monitor
+cd apps/operations_monitor
+streamlit run app.py --server.port 8505
 ```
 
 ---
@@ -304,3 +326,14 @@ Each app folder has an `app.yaml` for Databricks Apps deployment. The hub detect
 | Data | [Pandas](https://pandas.pydata.org/) |
 | Shared library | `flutter_dash` (this repo) |
 | Deployment | Databricks Apps / Streamlit Cloud |
+
+---
+
+## Live Dashboards
+
+| Dashboard | Description | Status |
+|-----------|-------------|--------|
+| **Group Executive Report** | Multi-brand, multi-product performance with KPIs, trends, and variance analysis | ✅ Live |
+| **Operations Monitor** | Data quality check monitoring with pass/fail heatmaps, failure lifecycle tracking, and resolution times | ✅ Live |
+| **P&L Dashboard** | Profit & Loss reporting with drill-down by cost centre and entity | 🔜 Coming Soon |
+| **Trading Dashboard** | Real-time trading metrics across sports and gaming products | 🔜 Coming Soon |

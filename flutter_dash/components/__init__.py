@@ -16,6 +16,7 @@ from flutter_dash.components.charts import (                    # noqa: F401
     bar_chart,
     pie_chart,
     waterfall_chart,
+    heatmap_chart,
 )
 from flutter_dash.components.data_table import data_table       # noqa: F401
 from flutter_dash.components.sidebar import SidebarBuilder      # noqa: F401
