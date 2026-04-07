@@ -15,7 +15,6 @@ import pandas as pd
 
 from flutter_dash.theme import get_active_theme
 from flutter_dash.components import section_title, pie_chart
-from flutter_dash.components.section_title import multi_section_title
 from flutter_dash.formatters import fmt_number
 
 from config import (
@@ -76,11 +75,6 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
     epm_summary = _lifecycle_summary(df, COL_EPM_LIFECYCLE)
 
     # ── Render side-by-side donut charts ──────────────────────────────────
-    multi_section_title([
-        ("Revenue Lifecycle", ""),
-        ("EPM Lifecycle", ""),
-    ])
-
     col_left, col_right = st.columns(2)
 
     with col_left:
@@ -89,7 +83,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
             label_col="lifecycle",
             value_col="count",
             formatter=fmt_number,
-            title="",
+            title="Revenue Lifecycle",
             height=350,
             hole=0.5,
         )
@@ -109,7 +103,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
             label_col="lifecycle",
             value_col="count",
             formatter=fmt_number,
-            title="",
+            title="EPM Lifecycle",
             height=350,
             hole=0.5,
         )
