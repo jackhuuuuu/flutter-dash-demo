@@ -84,7 +84,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
             value_col="count",
             formatter=fmt_number,
             title="Revenue Lifecycle",
-            height=400,
+            height=350,
             hole=0.5,
         )
         # Override colours: green for never_failed, accent for resolved, red for unresolved
@@ -108,7 +108,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
             value_col="count",
             formatter=fmt_number,
             title="EPM Lifecycle",
-            height=400,
+            height=350,
             hole=0.5,
         )
         fig_epm.update_traces(

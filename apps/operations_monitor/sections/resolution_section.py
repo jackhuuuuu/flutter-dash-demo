@@ -89,7 +89,7 @@ def render_resolution_section(df: pd.DataFrame) -> None:
     )
 
     # ── Build horizontal bar chart ────────────────────────────────────────
-    layout = base_layout(tokens, height=max(300, len(avg_by_check) * 40 + 100))
+    layout = base_layout(tokens, height=350)
     layout["margin"]["l"] = 220
 
     fig = go.Figure()
