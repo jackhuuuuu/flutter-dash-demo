@@ -84,7 +84,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
             value_col="count",
             formatter=fmt_number,
             title="Revenue Lifecycle",
-            height=350,
+            height=400,
             hole=0.5,
         )
         # Override colours: green for never_failed, accent for resolved, red for unresolved
@@ -95,6 +95,10 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
                 tokens.negative,   # UNRESOLVED
             ]),
         )
+        fig_rev.update_layout(
+            legend=dict(y=-0.15, orientation="h", xanchor="center", x=0.5),
+            margin=dict(t=40, b=60),
+        )
         st.plotly_chart(fig_rev, key="lifecycle_revenue")
 
     with col_right:
@@ -104,7 +108,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
             value_col="count",
             formatter=fmt_number,
             title="EPM Lifecycle",
-            height=350,
+            height=400,
             hole=0.5,
         )
         fig_epm.update_traces(
@@ -113,5 +117,9 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
                 tokens.accent,
                 tokens.negative,
             ]),
+        )
+        fig_epm.update_layout(
+            legend=dict(y=-0.15, orientation="h", xanchor="center", x=0.5),
+            margin=dict(t=40, b=60),
         )
         st.plotly_chart(fig_epm, key="lifecycle_epm")
