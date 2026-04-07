@@ -1,6 +1,7 @@
 # Requirements for the Operations Monitor dashboard.
-# These are the same as the main project requirements.
-# Listed here for Databricks Apps deployment.
-streamlit>=1.30
+# flutter_dash is installed from the repo root via pyproject.toml.
+# Listed here for Streamlit Cloud and Databricks Apps deployment.
+streamlit>=1.32
 plotly>=5.18
 pandas>=2.0
+../../.
