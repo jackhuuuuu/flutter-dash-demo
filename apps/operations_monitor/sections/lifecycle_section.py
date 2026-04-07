@@ -101,7 +101,7 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
                 tokens.negative,   # UNRESOLVED
             ]),
         )
-        st.plotly_chart(fig_rev, use_container_width=True, key="lifecycle_revenue")
+        st.plotly_chart(fig_rev, key="lifecycle_revenue")
 
     with col_right:
         fig_epm = pie_chart(
@@ -120,4 +120,4 @@ def render_lifecycle_section(df: pd.DataFrame) -> None:
                 tokens.negative,
             ]),
         )
-        st.plotly_chart(fig_epm, use_container_width=True, key="lifecycle_epm")
+        st.plotly_chart(fig_epm, key="lifecycle_epm")

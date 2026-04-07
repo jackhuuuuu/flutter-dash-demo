@@ -90,4 +90,4 @@ def render_trend_section(
         textfont=dict(color="white", size=11),
     )
 
-    st.plotly_chart(fig, use_container_width=True, key="daily_trend")
+    st.plotly_chart(fig, key="daily_trend")

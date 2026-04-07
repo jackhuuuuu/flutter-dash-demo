@@ -14,7 +14,6 @@ the iframe — you don't need to understand it, it just works.
 """
 
 import streamlit as st
-import streamlit.components.v1 as stc
 from typing import Callable, Dict, List, Optional
 
 from flutter_dash.theme import get_active_theme
@@ -275,4 +274,4 @@ def kpi_card(
     </body></html>
     """
 
-    stc.html(card_html, height=height, scrolling=False)
+    st.html(card_html, height=height)

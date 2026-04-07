@@ -16,7 +16,7 @@ In production, this is deployed as its own Databricks App.
 
 import os
 import streamlit as st
-import streamlit.components.v1 as components
+
 
 from flutter_dash.theme import apply_theme
 from flutter_dash.theme.palettes import FLUTTER_DARK, FLUTTER_LIGHT
@@ -238,7 +238,7 @@ with _col_theme:
 # Inject JS for live search-as-you-type
 # Streamlit text_input only commits on Enter/blur, so we debounce keystroke
 # events and trigger a blur+refocus to submit the value while keeping focus.
-components.html("""
+st.html("""
 <script>
 (function() {
     const doc = window.parent.document;

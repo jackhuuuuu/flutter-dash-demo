@@ -116,4 +116,4 @@ def render_resolution_section(df: pd.DataFrame) -> None:
     layout["showlegend"] = False
 
     fig.update_layout(**layout)
-    st.plotly_chart(fig, use_container_width=True, key="resolution_times")
+    st.plotly_chart(fig, key="resolution_times")

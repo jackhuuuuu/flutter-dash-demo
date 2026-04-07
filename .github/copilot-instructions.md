@@ -105,9 +105,11 @@ These are real issues that have come up — follow these rules to avoid them:
   are rendered in columns (e.g. revenue vs EPM side-by-side).
 - **CSV null strings**: Databricks CSV exports write literal `"null"` for missing
   values. Always add `df.replace("null", pd.NA)` in `data_loader.py`.
-- **HTML components**: `stc.html()` iframes inherit no styling from Streamlit.
+- **HTML components**: `st.html()` iframes inherit no styling from Streamlit.
   Always set `background:transparent` on the `<body>` and use `tokens.bg_surface`
   for the card background.
+- **Plotly chart width**: use `st.plotly_chart(fig, key=...)` without
+  `use_container_width`. The old parameter is removed; charts stretch by default.
 - **Resolution minutes**: always convert to hours for display (÷ 60). Raw minutes
   are not intuitive for non-technical users.
 

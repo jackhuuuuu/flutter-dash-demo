@@ -131,4 +131,4 @@ def render_heatmap(
         ),
     )
 
-    st.plotly_chart(fig, use_container_width=True, key="status_heatmap")
+    st.plotly_chart(fig, key="status_heatmap")

@@ -11,7 +11,6 @@ Displays key operational health indicators:
 """
 
 import streamlit as st
-import streamlit.components.v1 as stc
 import pandas as pd
 
 from flutter_dash.theme import get_active_theme
@@ -129,7 +128,7 @@ def _render_ops_kpi_card(
     </div>
     </body></html>
     """
-    stc.html(card_html, height=155)
+    st.html(card_html, height=155)
 
 
 def render_kpi_section(df: pd.DataFrame) -> None:

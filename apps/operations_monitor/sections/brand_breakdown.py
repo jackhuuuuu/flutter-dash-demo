@@ -94,7 +94,7 @@ def render_brand_breakdown(df: pd.DataFrame) -> None:
                 height=350,
                 barmode="group",
             )
-            st.plotly_chart(fig_brand, use_container_width=True, key="breakdown_brand")
+            st.plotly_chart(fig_brand, key="breakdown_brand")
         else:
             st.info("No brand data available.")
 
@@ -113,6 +113,6 @@ def render_brand_breakdown(df: pd.DataFrame) -> None:
                 height=350,
                 barmode="group",
             )
-            st.plotly_chart(fig_wallet, use_container_width=True, key="breakdown_wallet")
+            st.plotly_chart(fig_wallet, key="breakdown_wallet")
         else:
             st.info("No wallet type data available.")
