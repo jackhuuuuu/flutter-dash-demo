@@ -266,7 +266,7 @@ st.html("""
     new MutationObserver(attach).observe(doc.body, {childList: true, subtree: true});
 })();
 </script>
-""", height=0)
+""")
 
 # ── Logo banner ───────────────────────────────────────────────────────────────
 _render_logo(tokens)

@@ -128,7 +128,7 @@ def _render_ops_kpi_card(
     </div>
     </body></html>
     """
-    st.html(card_html, height=155)
+    st.html(card_html)
 
 
 def render_kpi_section(df: pd.DataFrame) -> None:

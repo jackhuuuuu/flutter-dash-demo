@@ -140,6 +140,12 @@ When adding a new dashboard, also:
 2. Add an entry to `hub/hub_config.py` APPS list
 3. Add to `scripts/run_local.ps1` apps array
 
+### After Deploying to Streamlit Cloud
+Once a dashboard is deployed to Streamlit Cloud, add its `cloud_url` to the
+app's entry in `hub/hub_config.py`. The hub uses this field to link to the
+deployed app when it detects it's running on Streamlit Cloud. Without it,
+the tile will fall back to `localhost` links which won't work in production.
+
 ---
 
 ## Self-Maintenance Rules

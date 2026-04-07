@@ -107,6 +107,7 @@ APPS = [
         "status": "live",
         "local_port": 8505,
         "app_path": "apps/operations_monitor",
+        "cloud_url": "https://flutter-dash-demo-m6knekmwyddiajrwmxfrd3.streamlit.app",
         "internal": True,
     },
 
