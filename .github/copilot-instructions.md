@@ -106,16 +106,15 @@ These are real issues that have come up — follow these rules to avoid them:
   are rendered in columns (e.g. revenue vs EPM side-by-side).
 - **CSV null strings**: Databricks CSV exports write literal `"null"` for missing
   values. Always add `df.replace("null", pd.NA)` in `data_loader.py`.
-- **HTML components**: `st.html()` iframes inherit no styling from Streamlit.
-  Always set `background:transparent` on the `<body>` and use `tokens.bg_surface`
-  for the card background.
+- **HTML components with JavaScript**: `st.html()` is for static HTML only —
+  it does NOT execute JavaScript. For interactive HTML (e.g. kpi_card flip
+  button), use `st.iframe(html_string, height=N)` which renders a real iframe
+  that supports JS. Use CSS Grid with `opacity`/`pointer-events` toggling
+  (not `display:none`) so both panels contribute to iframe height.
 - **Plotly chart width**: use `st.plotly_chart(fig, key=...)` without
   `use_container_width`. The old parameter is removed; charts stretch by default.
 - **Resolution hours**: resolution data is stored in hours in the views.
   Do NOT divide by 60 — display as-is with one decimal place.
-- **st.html() iframe height**: `st.html()` auto-sizes to initial visible content.
-  If content can toggle (e.g. kpi_card flip), pass explicit `height=` to avoid
-  clipping the toggled view.
 - **Tab styling in light theme**: unselected Streamlit tabs default to white text,
   which is invisible on a light background. The CSS in `css.py` section 4 sets
   `.stTabs [data-baseweb="tab"]` colour to `text_muted` to fix this.

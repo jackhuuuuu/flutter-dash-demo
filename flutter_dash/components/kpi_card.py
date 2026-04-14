@@ -151,8 +151,8 @@ def kpi_card(
         flip_btn = f"""
         <div style="margin-top:12px;border-top:1px solid {tokens.border};padding-top:8px;">
           <button onclick="
-            document.getElementById('{front_id}').style.display='none';
-            document.getElementById('{back_id}').style.display='block';
+            document.getElementById('{front_id}').classList.add('panel-hidden');
+            document.getElementById('{back_id}').classList.remove('panel-hidden');
           " style="background:{accent_bg_10};border:1px solid {tokens.accent};
                    cursor:pointer;color:{tokens.accent};font-size:11px;
                    border-radius:6px;padding:4px 12px;width:100%;
@@ -164,8 +164,8 @@ def kpi_card(
     back_btn = f"""
     <div style="margin-top:10px;border-top:1px solid {tokens.border};padding-top:8px;">
       <button onclick="
-        document.getElementById('{back_id}').style.display='none';
-        document.getElementById('{front_id}').style.display='block';
+        document.getElementById('{back_id}').classList.add('panel-hidden');
+        document.getElementById('{front_id}').classList.remove('panel-hidden');
       " style="background:{accent_bg_10};border:1px solid {tokens.accent};
                cursor:pointer;color:{tokens.accent};font-size:11px;
                border-radius:6px;padding:4px 12px;width:100%;
@@ -250,29 +250,42 @@ def kpi_card(
         display:inline-block;
         margin:0 1px;
       }}
+      .panels {{
+        display:grid;
+      }}
+      .panels > div {{
+        grid-area: 1 / 1;
+        transition: opacity 0.15s ease;
+      }}
+      .panel-hidden {{
+        opacity:0;
+        pointer-events:none;
+      }}
     </style>
     </head><body>
     <div class="card">
+      <div class="panels">
 
-      <!-- FRONT -->
-      <div id="{front_id}">
-        <div class="period-pill">{period_label}</div>
-        <div class="metric-title">{title}</div>
-        <div class="metric-value">{val_str}</div>
-        {compare_html}
-        {flip_btn}
+        <!-- FRONT -->
+        <div id="{front_id}">
+          <div class="period-pill">{period_label}</div>
+          <div class="metric-title">{title}</div>
+          <div class="metric-value">{val_str}</div>
+          {compare_html}
+          {flip_btn}
+        </div>
+
+        <!-- BACK (drivers) -->
+        <div id="{back_id}" class="panel-hidden">
+          <div class="period-pill">{period_label}</div>
+          <div class="metric-title">{title}</div>
+          {drivers_html}
+          {back_btn}
+        </div>
+
       </div>
-
-      <!-- BACK (drivers) -->
-      <div id="{back_id}" style="display:none;">
-        <div class="period-pill">{period_label}</div>
-        <div class="metric-title">{title}</div>
-        {drivers_html}
-        {back_btn}
-      </div>
-
     </div>
     </body></html>
     """
 
-    st.html(card_html)
+    st.iframe(card_html, height=height)
