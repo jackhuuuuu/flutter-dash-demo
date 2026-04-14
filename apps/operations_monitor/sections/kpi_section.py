@@ -18,8 +18,9 @@ from flutter_dash.theme.tokens import hex_to_rgba
 from flutter_dash.components import section_title
 
 from config import (
-    COL_OVERALL_STATUS, COL_REV_LIFECYCLE, COL_EPM_LIFECYCLE,
-    COL_REV_RESOLUTION_MINS, COL_EPM_RESOLUTION_MINS,
+    COL_OVERALL_STATUS, COL_REVENUE_STATUS, COL_EPM_STATUS,
+    COL_REV_LIFECYCLE, COL_EPM_LIFECYCLE,
+    COL_REV_RESOLUTION_HRS, COL_EPM_RESOLUTION_HRS,
     STATUS_PASS, STATUS_FAIL,
     LIFECYCLE_UNRESOLVED, LIFECYCLE_RESOLVED,
 )
@@ -150,9 +151,17 @@ def render_kpi_section(df: pd.DataFrame) -> None:
 
     # ── Calculate KPI values ──────────────────────────────────────────────
     total_checks = len(df)
-    pass_count = (df[COL_OVERALL_STATUS] == STATUS_PASS).sum()
+
+    # Revenue (ERP) pass rate
+    rev_pass = (df[COL_REVENUE_STATUS] == STATUS_PASS).sum()
+    rev_rate = (rev_pass / total_checks * 100) if total_checks > 0 else 0
+
+    # EPM pass rate
+    epm_pass = (df[COL_EPM_STATUS] == STATUS_PASS).sum()
+    epm_rate = (epm_pass / total_checks * 100) if total_checks > 0 else 0
+
+    # Active failures (overall)
     fail_count = (df[COL_OVERALL_STATUS] == STATUS_FAIL).sum()
-    pass_rate = (pass_count / total_checks * 100) if total_checks > 0 else 0
 
     # Resolved = checks that failed but have since been fixed
     resolved = df[
@@ -160,15 +169,18 @@ def render_kpi_section(df: pd.DataFrame) -> None:
         | (df[COL_EPM_LIFECYCLE] == LIFECYCLE_RESOLVED)
     ].shape[0]
 
-    # Average resolution time across both revenue and EPM (in hours)
-    rev_mins = df[COL_REV_RESOLUTION_MINS].dropna()
-    epm_mins = df[COL_EPM_RESOLUTION_MINS].dropna()
-    all_mins = pd.concat([rev_mins, epm_mins])
-    avg_resolution_hrs = (all_mins.mean() / 60) if len(all_mins) > 0 else 0
+    # Average resolution time across both revenue and EPM (already in hours)
+    rev_hrs = df[COL_REV_RESOLUTION_HRS].dropna()
+    epm_hrs = df[COL_EPM_RESOLUTION_HRS].dropna()
+    all_hrs = pd.concat([rev_hrs, epm_hrs])
+    avg_resolution_hrs = all_hrs.mean() if len(all_hrs) > 0 else 0
 
     # ── Choose colours based on values ────────────────────────────────────
-    pass_colour = tokens.positive if pass_rate >= 95 else (
-        tokens.warning if pass_rate >= 80 else tokens.negative
+    rev_colour = tokens.positive if rev_rate >= 95 else (
+        tokens.warning if rev_rate >= 80 else tokens.negative
+    )
+    epm_colour = tokens.positive if epm_rate >= 95 else (
+        tokens.warning if epm_rate >= 80 else tokens.negative
     )
     fail_colour = tokens.positive if fail_count == 0 else tokens.negative
     resolved_colour = tokens.positive if resolved > 0 else tokens.text_muted
@@ -178,21 +190,21 @@ def render_kpi_section(df: pd.DataFrame) -> None:
 
     with cols[0]:
         _render_ops_kpi_card(
-            title="Total Checks",
-            value=f"{total_checks:,}",
-            subtitle=f"Across {df['reporting_date'].nunique()} days",
-            colour=tokens.accent,
-            icon="📋",
+            title="Revenue Pass Rate",
+            value=f"{rev_rate:.1f}%",
+            subtitle=f"{rev_pass:,} of {total_checks:,} passing",
+            colour=rev_colour,
+            icon="💰",
             card_index=0,
         )
 
     with cols[1]:
         _render_ops_kpi_card(
-            title="Pass Rate",
-            value=f"{pass_rate:.1f}%",
-            subtitle=f"{pass_count:,} of {total_checks:,} passing",
-            colour=pass_colour,
-            icon="✅",
+            title="EPM Pass Rate",
+            value=f"{epm_rate:.1f}%",
+            subtitle=f"{epm_pass:,} of {total_checks:,} passing",
+            colour=epm_colour,
+            icon="📊",
             card_index=1,
         )
 
@@ -220,7 +232,7 @@ def render_kpi_section(df: pd.DataFrame) -> None:
         _render_ops_kpi_card(
             title="Avg Resolution Time",
             value=f"{avg_resolution_hrs:.1f}h",
-            subtitle=f"{len(all_mins)} resolved failures" if len(all_mins) > 0 else "No data",
+            subtitle=f"{len(all_hrs)} resolved failures" if len(all_hrs) > 0 else "No data",
             colour=tokens.accent,
             icon="⏱️",
             card_index=4,

@@ -191,6 +191,7 @@ def kpi_card(
         border:1px solid {tokens.border};
         border-radius:14px;
         padding:16px 14px;
+        min-height:{height}px;
       }}
       .period-pill {{
         display:inline-block;
@@ -274,4 +275,4 @@ def kpi_card(
     </body></html>
     """
 
-    st.html(card_html)
+    st.html(card_html, height=height + 40)

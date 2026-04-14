@@ -17,7 +17,7 @@ from flutter_dash.components import section_title
 
 from config import (
     COL_CHECK_NAME,
-    COL_REV_RESOLUTION_MINS, COL_EPM_RESOLUTION_MINS,
+    COL_REV_RESOLUTION_HRS, COL_EPM_RESOLUTION_HRS,
     COL_REV_LIFECYCLE, COL_EPM_LIFECYCLE,
     LIFECYCLE_RESOLVED,
 )
@@ -54,24 +54,24 @@ def render_resolution_section(df: pd.DataFrame) -> None:
     rev_resolved = df[df[COL_REV_LIFECYCLE] == LIFECYCLE_RESOLVED].copy()
     if not rev_resolved.empty:
         for _, row in rev_resolved.iterrows():
-            mins = row[COL_REV_RESOLUTION_MINS]
-            if pd.notna(mins):
+            hrs = row[COL_REV_RESOLUTION_HRS]
+            if pd.notna(hrs):
                 records.append({
                     "check_name": row[COL_CHECK_NAME],
                     "type": "Revenue",
-                    "hours": mins / 60,
+                    "hours": hrs,
                 })
 
     # EPM resolutions
     epm_resolved = df[df[COL_EPM_LIFECYCLE] == LIFECYCLE_RESOLVED].copy()
     if not epm_resolved.empty:
         for _, row in epm_resolved.iterrows():
-            mins = row[COL_EPM_RESOLUTION_MINS]
-            if pd.notna(mins):
+            hrs = row[COL_EPM_RESOLUTION_HRS]
+            if pd.notna(hrs):
                 records.append({
                     "check_name": row[COL_CHECK_NAME],
                     "type": "EPM",
-                    "hours": mins / 60,
+                    "hours": hrs,
                 })
 
     if not records:

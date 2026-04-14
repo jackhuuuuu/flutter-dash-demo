@@ -159,6 +159,29 @@ def generate_css(tokens: ThemeTokens) -> str:
      4. WIDGETS — dropdowns, multiselects, tags, text inputs, buttons
      ═══════════════════════════════════════════════════════════════════════════ */
 
+  /* Tabs — ensure unselected tabs are visible in both themes */
+  .stTabs [data-baseweb="tab-list"] {{
+    gap: 4px;
+  }}
+
+  .stTabs [data-baseweb="tab"] {{
+    color: {tokens.text_muted} !important;
+    font-weight: 500;
+  }}
+
+  .stTabs [data-baseweb="tab"]:hover {{
+    color: {tokens.text_primary} !important;
+  }}
+
+  .stTabs [aria-selected="true"] {{
+    color: {tokens.accent} !important;
+    font-weight: 600;
+  }}
+
+  .stTabs [data-baseweb="tab-highlight"] {{
+    background-color: {tokens.accent} !important;
+  }}
+
   /* Dropdown and multiselect containers */
   .stSelectbox > div > div,
   .stMultiSelect > div > div {{

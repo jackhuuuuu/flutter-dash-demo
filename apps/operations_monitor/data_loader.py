@@ -2,66 +2,57 @@
 """
 Data loading for the Operations Monitor dashboard.
 
-Uses the flutter_dash data layer to load from CSV (local dev) or
-Databricks Unity Catalog (production).  Change DATA_SOURCE to switch.
+Loads three datasets:
+  - File delivery status  (global_vw_file_delivery)
+  - DQ check results      (global_vw_dq_monitor)
+  - Check-to-file mapping (global_dq_check_file_mapping)
 
-The source data comes from the DQ monitor view:
-    sandbox_global_finance.jackhu.global_vw_dq_monitor
-
-In local development we read from the sample CSV file instead.
+CSV for local dev, Databricks for production.
 """
 
 import streamlit as st
 import pandas as pd
 from pathlib import Path
 
-from flutter_dash.data.loader import get_loader
-
-# ── Configuration ─────────────────────────────────────────────────────────────
-# Change these when moving to Databricks Apps:
-#   DATA_SOURCE = "databricks"
-#   LOADER_KWARGS = {
-#       "catalog": "sandbox_global_finance",
-#       "schema": "jackhu",
-#       "table": "global_vw_dq_monitor",
-#   }
+import config
 
 _DIR = Path(__file__).parent
 
-DATA_SOURCE = "csv"
-LOADER_KWARGS = {"file_path": _DIR / "checks_log_sample.csv"}
+
+@st.cache_data
+def load_file_delivery() -> pd.DataFrame:
+    """Load the file delivery dataset."""
+    df = pd.read_csv(_DIR / config.CSV_FILE_DELIVERY)
+    df = df.replace("null", pd.NA)
+    df[config.COL_REPORTING_DATE] = pd.to_datetime(df[config.COL_REPORTING_DATE])
+    df[config.COL_REPORTING_MONTH] = pd.to_datetime(df[config.COL_REPORTING_MONTH])
+    for col in [config.COL_ERP_DELIVERY_DAYS, config.COL_EPM_DELIVERY_DAYS,
+                config.COL_ERP_RESOLUTION_HRS, config.COL_LATEST_ROW_COUNT]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
 
 
 @st.cache_data
-def load_data() -> pd.DataFrame:
-    """
-    Load the DQ monitor dataset.
-
-    Uses ``@st.cache_data`` so the data is loaded once and cached
-    across Streamlit reruns.
-
-    Post-processing:
-      - Converts reporting_date to Python date objects
-      - Replaces 'null' strings with proper NaN values
-      - Converts resolution minutes to numeric
-    """
-    loader = get_loader(DATA_SOURCE, **LOADER_KWARGS)
-    df = loader.load()
-
-    # ── Clean up null strings from CSV export ─────────────────────────────
-    # The Databricks CSV export writes literal "null" for missing values.
+def load_dq_monitor() -> pd.DataFrame:
+    """Load the DQ check-level dataset."""
+    df = pd.read_csv(_DIR / config.CSV_DQ_MONITOR)
     df = df.replace("null", pd.NA)
-
-    # ── Ensure date columns are proper date types ─────────────────────────
-    if "reporting_date" in df.columns:
-        df["reporting_date"] = pd.to_datetime(df["reporting_date"]).dt.date
-
-    if "reporting_month" in df.columns:
-        df["reporting_month"] = pd.to_datetime(df["reporting_month"]).dt.date
-
-    # ── Ensure resolution minutes are numeric ─────────────────────────────
-    for col in ["revenue_resolution_minutes", "epm_resolution_minutes"]:
+    df[config.COL_REPORTING_DATE] = pd.to_datetime(df[config.COL_REPORTING_DATE])
+    df[config.COL_REPORTING_MONTH] = pd.to_datetime(df[config.COL_REPORTING_MONTH])
+    for col in [config.COL_REV_RESOLUTION_HRS, config.COL_EPM_RESOLUTION_HRS,
+                config.COL_CHECK_DAILY_VALUE, config.COL_CHECK_MTD_VALUE,
+                config.COL_DAILY_REV_TOLERANCE, config.COL_MTD_REV_TOLERANCE,
+                config.COL_DAILY_EPM_TOLERANCE, config.COL_MTD_EPM_TOLERANCE]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
 
+
+@st.cache_data
+def load_check_file_mapping() -> pd.DataFrame:
+    """Load the check-to-file mapping table (small, static metadata)."""
+    df = pd.read_csv(_DIR / config.CSV_CHECK_FILE_MAPPING)
+    df = df.replace("null", pd.NA)
+    df = df[df[config.COL_MAP_STATUS] == "APPROVED"]
     return df

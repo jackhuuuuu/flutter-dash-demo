@@ -76,6 +76,7 @@ apps/<name>/
 ### Reusable Components (`flutter_dash/components/`)
 - `kpi_card` — metric cards with variance comparisons
 - `charts.py` — `line_chart`, `bar_chart`, `pie_chart`, `waterfall_chart`, `heatmap_chart`
+  - `heatmap_chart` has a `show_text` parameter (default True) to toggle cell labels
 - `data_table` — hierarchical financial table
 - `section_title` — styled section headers
 - `sidebar.py` — `SidebarBuilder` for composable sidebars
@@ -110,8 +111,14 @@ These are real issues that have come up — follow these rules to avoid them:
   for the card background.
 - **Plotly chart width**: use `st.plotly_chart(fig, key=...)` without
   `use_container_width`. The old parameter is removed; charts stretch by default.
-- **Resolution minutes**: always convert to hours for display (÷ 60). Raw minutes
-  are not intuitive for non-technical users.
+- **Resolution hours**: resolution data is stored in hours in the views.
+  Do NOT divide by 60 — display as-is with one decimal place.
+- **st.html() iframe height**: `st.html()` auto-sizes to initial visible content.
+  If content can toggle (e.g. kpi_card flip), pass explicit `height=` to avoid
+  clipping the toggled view.
+- **Tab styling in light theme**: unselected Streamlit tabs default to white text,
+  which is invisible on a light background. The CSS in `css.py` section 4 sets
+  `.stTabs [data-baseweb="tab"]` colour to `text_muted` to fix this.
 
 ---
 

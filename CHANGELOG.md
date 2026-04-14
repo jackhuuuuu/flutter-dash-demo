@@ -6,6 +6,79 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.4.0] — 2026-04-14
+
+### Added
+
+- **Per-tab sidebar filters** — sidebar now shows tab-specific filters:
+  - File Delivery tab: File Name multiselect, Delivery Lifecycle selector
+  - Check Detail tab: Check Name multiselect, Table View mode (All/Failed/Passed)
+- **ERP Resends KPI** — new card showing count of files re-sent after initial ERP
+- **3-level file heatmap** — green (0d on-time), yellow (D+1), red (>1d late),
+  grey (no data); purely colour-based, no cell text
+- **`show_text` parameter** on `heatmap_chart()` — toggleable cell labels for
+  modular reuse across dashboards
+- **Tab styling** — CSS for `st.tabs` ensuring unselected tabs are visible in
+  both light and dark themes
+- **Check table view modes** — "All", "Failed Only", "Passed Only" via sidebar
+
+### Changed
+
+- **File delivery uses `erp_final_delivered_at`** — ERP delivery rate, delivery
+  days, and heatmap all use the final ERP delivery timestamp (not first)
+- **Resolution columns renamed** — `_minutes` → `_hours` in both views;
+  removed `/60` conversions throughout
+- **File KPIs reworked** — removed "Total Files" card, replaced "Avg Delivery Days"
+  with "Late Deliveries" (files >1 day) and "ERP Resends"
+- **Check KPIs reworked** — removed "Total Checks" card, added separate Revenue
+  and EPM pass rate cards
+- **Check tab simplified** — removed trend, lifecycle, resolution, and brand
+  breakdown sections; now shows KPIs + heatmap + detail table
+- **Heatmaps cleaned up** — removed PASS/FAIL text labels from cells in both
+  file and check heatmaps; info shown in tooltip only
+- **Check detail table** — removed Wallet column, accepts `view_mode` parameter
+
+### Fixed
+
+- **GER flip KPI button** — added `min-height` and explicit `height` on
+  `st.html()` so the iframe is tall enough for the flipped (driver) view
+- **Light theme tab visibility** — unselected tabs now use `text_muted` colour
+  instead of invisible white-on-white
+
+---
+
+## [0.3.0] — 2026-04-10
+
+### Added
+
+- **Operations Monitor: File Delivery tab** — new front page showing file-level
+  delivery status (ERP/EPM/Manual Override) across brands and dates
+  - KPI cards: Total Files, ERP Delivery Rate, EPM Only, Manual Overrides, Avg Delivery Days
+  - File delivery heatmap: file × date colour grid
+  - File delivery detail table with lifecycle badges
+  - Data source: `global_vw_file_delivery` view
+
+- **Tab navigation** — Operations Monitor now uses `st.tabs` for two-level view:
+  - Tab 1 "File Delivery": high-level file status (designed for at-a-glance monitoring)
+  - Tab 2 "Check Detail": granular DQ check results (drill-down for investigation)
+
+- **Check-to-file mapping** (`global_dq_check_file_mapping.csv`) — loaded as bridge
+  between file-level and check-level views
+
+- **Check value tooltips** — check detail table now shows daily/MTD values and
+  revenue/EPM tolerances on hover over the check name
+
+### Changed
+
+- **Operations Monitor data loader** — now loads three datasets (file delivery,
+  DQ monitor, check-file mapping) instead of a single checks log
+- **DQ monitor sample data** updated with check values and tolerance columns
+  (`check_daily_value`, `check_mtd_value`, `daily_revenue_tolerance`, etc.)
+- **Sidebar simplified** — removed Wallet Type and Check Name filters from sidebar
+  (check-level filtering happens within the Check Detail tab)
+
+---
+
 ## [0.2.0] — 2026-04-07
 
 ### Added

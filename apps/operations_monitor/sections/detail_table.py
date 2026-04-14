@@ -1,10 +1,9 @@
 # sections/detail_table.py
 """
-Active failures detail table — action-required list.
+Check-level detail table — shows all DQ check results with values & tolerances.
 
-Shows all checks that are currently failing or have unresolved issues.
-This is the "what do I need to fix right now?" table that operators
-drill into to understand which checks need attention.
+For active failures, shows an action-required view. Otherwise shows
+the full check table with check values and tolerance info in tooltips.
 """
 
 import streamlit as st
@@ -17,9 +16,12 @@ from flutter_dash.components import section_title
 from config import (
     COL_REPORTING_DATE, COL_BRAND, COL_WALLET_TYPE, COL_CHECK_NAME,
     COL_REVENUE_STATUS, COL_EPM_STATUS, COL_OVERALL_STATUS,
+    COL_CHECK_DAILY_VALUE, COL_CHECK_MTD_VALUE,
+    COL_DAILY_REV_TOLERANCE, COL_MTD_REV_TOLERANCE,
+    COL_DAILY_EPM_TOLERANCE, COL_MTD_EPM_TOLERANCE,
     COL_REV_FIRST_FAILED, COL_EPM_FIRST_FAILED,
     COL_REV_LIFECYCLE, COL_EPM_LIFECYCLE,
-    COL_REV_RESOLUTION_MINS, COL_EPM_RESOLUTION_MINS,
+    COL_REV_RESOLUTION_HRS, COL_EPM_RESOLUTION_HRS,
     STATUS_FAIL, LIFECYCLE_UNRESOLVED,
 )
 
@@ -57,21 +59,63 @@ def _lifecycle_badge(lifecycle: str, tokens) -> str:
     )
 
 
-def render_detail_table(df: pd.DataFrame) -> None:
-    """
-    Render the active failures / issues detail table.
+def _fmt_val(val) -> str:
+    """Format a numeric value for display."""
+    if pd.isna(val):
+        return "—"
+    return f"{float(val):,.4f}"
 
-    Shows checks that are either currently FAIL or have UNRESOLVED lifecycle.
-    If all checks are healthy, shows a success message instead.
+
+def _fmt_tol(val) -> str:
+    """Format a tolerance value (-1 means N/A)."""
+    if pd.isna(val):
+        return "N/A"
+    v = float(val)
+    if v == -1:
+        return "N/A"
+    return f"{v:,.0f}"
+
+
+def _build_value_tooltip(row, tokens) -> str:
+    """Build an HTML tooltip showing check values and tolerances."""
+    daily_val = _fmt_val(row.get(COL_CHECK_DAILY_VALUE))
+    mtd_val = _fmt_val(row.get(COL_CHECK_MTD_VALUE))
+    d_rev_tol = _fmt_tol(row.get(COL_DAILY_REV_TOLERANCE))
+    m_rev_tol = _fmt_tol(row.get(COL_MTD_REV_TOLERANCE))
+    d_epm_tol = _fmt_tol(row.get(COL_DAILY_EPM_TOLERANCE))
+    m_epm_tol = _fmt_tol(row.get(COL_MTD_EPM_TOLERANCE))
+
+    return (
+        f'<div class="tooltip-box">'
+        f'<b>Daily Value:</b> {daily_val}<br>'
+        f'<b>MTD Value:</b> {mtd_val}<br>'
+        f'<hr style="margin:4px 0;border-color:{tokens.border}">'
+        f'<b>Revenue Tol:</b> Daily {d_rev_tol} | MTD {m_rev_tol}<br>'
+        f'<b>EPM Tol:</b> Daily {d_epm_tol} | MTD {m_epm_tol}'
+        f'</div>'
+    )
+
+
+def render_detail_table(df: pd.DataFrame, view_mode: str = "All") -> None:
+    """
+    Render the check-level detail table.
 
     Parameters
     ----------
     df : DataFrame
-        Filtered data for the current selections.
+        Filtered check-level DQ monitor data.
+    view_mode : str
+        "All" shows everything, "Failed Only" shows only failures,
+        "Passed Only" shows only passing checks.
     """
+    subtitle_map = {
+        "All": "Full check results (hover check name for values & tolerances)",
+        "Failed Only": "Checks currently failing or unresolved",
+        "Passed Only": "Checks currently passing",
+    }
     section_title(
-        "Action Required",
-        "Checks currently failing or with unresolved issues",
+        "Check Detail",
+        subtitle_map.get(view_mode, subtitle_map["All"]),
     )
 
     if df.empty:
@@ -80,23 +124,28 @@ def render_detail_table(df: pd.DataFrame) -> None:
 
     tokens = get_active_theme()
 
-    # ── Filter to problems: currently failing OR unresolved ───────────────
-    problems = df[
-        (df[COL_OVERALL_STATUS] == STATUS_FAIL)
-        | (df[COL_REV_LIFECYCLE] == LIFECYCLE_UNRESOLVED)
-        | (df[COL_EPM_LIFECYCLE] == LIFECYCLE_UNRESOLVED)
-    ].copy()
+    # Filter based on view mode
+    if view_mode == "Failed Only":
+        display = df[
+            (df[COL_OVERALL_STATUS] == STATUS_FAIL)
+            | (df[COL_REV_LIFECYCLE] == LIFECYCLE_UNRESOLVED)
+            | (df[COL_EPM_LIFECYCLE] == LIFECYCLE_UNRESOLVED)
+        ].copy()
+    elif view_mode == "Passed Only":
+        display = df[df[COL_OVERALL_STATUS] != STATUS_FAIL].copy()
+    else:
+        display = df.copy()
 
-    if problems.empty:
-        st.success("🎉 All checks are passing — no action required!")
+    if display.empty:
+        if view_mode == "Failed Only":
+            st.success("🎉 All checks are passing — no action required!")
+        else:
+            st.info("No matching checks.")
         return
 
-    # ── Build the HTML table ──────────────────────────────────────────────
-    # Define visible columns and their display names
     col_config = [
         (COL_REPORTING_DATE, "Date"),
         (COL_BRAND, "Brand"),
-        (COL_WALLET_TYPE, "Wallet"),
         (COL_CHECK_NAME, "Check Name"),
         (COL_REVENUE_STATUS, "Revenue"),
         (COL_EPM_STATUS, "EPM"),
@@ -105,13 +154,41 @@ def render_detail_table(df: pd.DataFrame) -> None:
         (COL_EPM_LIFECYCLE, "EPM Lifecycle"),
     ]
 
-    # Sort by date descending, then check name
-    problems = problems.sort_values(
+    display = display.sort_values(
         [COL_REPORTING_DATE, COL_CHECK_NAME],
         ascending=[False, True],
     )
 
-    # ── Table header ──────────────────────────────────────────────────────
+    # Tooltip CSS
+    tooltip_css = f"""
+    <style>
+      .check-cell {{
+        position: relative;
+        cursor: help;
+      }}
+      .check-cell .tooltip-box {{
+        display: none;
+        position: absolute;
+        left: 0;
+        top: 100%;
+        z-index: 100;
+        background: {tokens.bg_elevated};
+        border: 1px solid {tokens.border};
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 11px;
+        color: {tokens.text_primary};
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        font-family: {tokens.font_mono};
+      }}
+      .check-cell:hover .tooltip-box {{
+        display: block;
+      }}
+    </style>
+    """
+
+    # Header
     header_cells = ""
     for _, display_name in col_config:
         header_cells += (
@@ -123,22 +200,25 @@ def render_detail_table(df: pd.DataFrame) -> None:
             f'{display_name}</th>'
         )
 
-    # ── Table body ────────────────────────────────────────────────────────
+    # Body
     body_rows = ""
-    for _, row in problems.iterrows():
+    for _, row in display.iterrows():
         cells = ""
         for col_name, _ in col_config:
             val = row.get(col_name, "")
 
-            # Format date
             if col_name == COL_REPORTING_DATE and hasattr(val, "strftime"):
                 val = val.strftime("%d %b %Y")
-
-            # Render status columns as badges
-            if col_name in (COL_REVENUE_STATUS, COL_EPM_STATUS, COL_OVERALL_STATUS):
+            elif col_name in (COL_REVENUE_STATUS, COL_EPM_STATUS, COL_OVERALL_STATUS):
                 val = _status_badge(str(val), tokens)
             elif col_name in (COL_REV_LIFECYCLE, COL_EPM_LIFECYCLE):
                 val = _lifecycle_badge(str(val), tokens)
+            elif col_name == COL_CHECK_NAME:
+                # Wrap check name with a tooltip showing values & tolerances
+                tooltip = _build_value_tooltip(row, tokens)
+                val = (
+                    f'<span class="check-cell">{val}{tooltip}</span>'
+                )
             else:
                 val = str(val) if pd.notna(val) else "—"
 
@@ -150,8 +230,8 @@ def render_detail_table(df: pd.DataFrame) -> None:
             )
         body_rows += f"<tr>{cells}</tr>"
 
-    # ── Full table HTML ───────────────────────────────────────────────────
     table_html = f"""
+    {tooltip_css}
     <div style="overflow-x:auto;border-radius:10px;border:1px solid {tokens.border};">
       <table style="width:100%;border-collapse:collapse;
                      background:{tokens.bg_surface};
@@ -164,9 +244,8 @@ def render_detail_table(df: pd.DataFrame) -> None:
 
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # ── Summary line below the table ──────────────────────────────────────
     st.markdown(
         f'<p style="color:{tokens.text_muted};font-size:11px;margin-top:8px;">'
-        f'{len(problems)} issue(s) found across {problems[COL_REPORTING_DATE].nunique()} date(s)</p>',
+        f'{len(display)} check(s) across {display[COL_REPORTING_DATE].nunique()} date(s)</p>',
         unsafe_allow_html=True,
     )

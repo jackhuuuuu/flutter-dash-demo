@@ -21,7 +21,7 @@ from flutter_dash.components import section_title, heatmap_chart
 from config import (
     COL_REPORTING_DATE, COL_CHECK_NAME,
     COL_OVERALL_STATUS, COL_REVENUE_STATUS, COL_EPM_STATUS,
-    STATUS_PASS, STATUS_FAIL, STATUS_TYPES,
+    STATUS_PASS, STATUS_FAIL,
 )
 
 
@@ -90,11 +90,11 @@ def render_heatmap(
         for dt in matrix.columns:
             val = matrix.loc[check_name, dt]
             if val == 1:
-                row_text.append("PASS ✓")
+                row_text.append("PASS")
             elif val == 0:
-                row_text.append("FAIL ✗")
+                row_text.append("FAIL")
             else:
-                row_text.append("—")
+                row_text.append("No data")
         text_values.append(row_text)
 
     # ── Colourscale: FAIL (red) → no data (grey) → PASS (green) ──────────
@@ -124,6 +124,7 @@ def render_heatmap(
         zmin=-1,
         zmax=1,
         show_colorbar=False,
+        show_text=False,
         hover_template=(
             "<b>%{y}</b><br>"
             "Date: %{x}<br>"

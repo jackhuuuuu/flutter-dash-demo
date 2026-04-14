@@ -89,19 +89,20 @@ The platform consists of:
 │       └── requirements.txt
 │
 │   └── operations_monitor/              #   Operations Monitor (DQ checks)
-│       ├── app.py                       #     Main orchestrator
+│       ├── app.py                       #     Main orchestrator (tabs: File Delivery + Check Detail)
 │       ├── config.py                    #     Column mappings, status values
 │       ├── data_loader.py              #     Data source config (CSV / Databricks)
-│       ├── checks_log_sample.csv       #     Sample DQ check results
+│       ├── global_vw_file_delivery_sample_v2.csv  # Sample file delivery data (v2)
+│       ├── global_vw_dq_monitor_sample_v2.csv     # Sample DQ check results (v2)
+│       ├── global_dq_check_file_mapping.csv       # Check-to-file mapping
 │       ├── sections/                    #     Visual sections of the dashboard
 │       │   ├── header.py               #       Title bar + filter summary
-│       │   ├── kpi_section.py          #       Operational health KPI cards
+│       │   ├── file_kpi_section.py     #       File delivery KPI cards
+│       │   ├── file_heatmap.py         #       File × date timeliness heatmap
+│       │   ├── file_detail_table.py    #       File delivery detail table
+│       │   ├── kpi_section.py          #       Check-level health KPI cards
 │       │   ├── heatmap.py              #       Check × date status grid
-│       │   ├── trend_section.py        #       Daily pass/fail stacked bars
-│       │   ├── lifecycle_section.py    #       Revenue & EPM lifecycle donuts
-│       │   ├── resolution_section.py   #       Resolution time bar chart
-│       │   ├── detail_table.py         #       Active failures action table
-│       │   └── brand_breakdown.py      #       By brand/wallet grouped bars
+│       │   └── detail_table.py         #       Check detail table with value tooltips
 │       ├── app.yaml                     #     Databricks Apps config
 │       └── requirements.txt
 │

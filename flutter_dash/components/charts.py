@@ -580,6 +580,7 @@ def heatmap_chart(
     zmin: Optional[float] = None,
     zmax: Optional[float] = None,
     show_colorbar: bool = True,
+    show_text: bool = True,
     hover_template: Optional[str] = None,
     tokens: Optional[ThemeTokens] = None,
 ) -> go.Figure:
@@ -615,6 +616,9 @@ def heatmap_chart(
         Min/max values for the colour scale. Defaults to data range.
     show_colorbar : bool
         Whether to show the colour legend bar. Default True.
+    show_text : bool
+        Whether to render text labels on heatmap cells. Default True.
+        When False, text_values are only used in hover tooltips.
     hover_template : str, optional
         Custom Plotly hover template. If None, a default is used.
     tokens : ThemeTokens, optional
@@ -679,7 +683,7 @@ def heatmap_chart(
         x=x_labels,
         y=y_labels,
         text=text_values if text_values else None,
-        texttemplate="%{text}" if text_values else None,
+        texttemplate="%{text}" if (text_values and show_text) else None,
         textfont=dict(size=10, family=tokens.font_mono, color=tokens.text_primary),
         colorscale=colorscale,
         zmin=zmin,
