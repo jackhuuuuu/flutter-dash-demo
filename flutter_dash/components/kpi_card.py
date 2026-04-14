@@ -275,4 +275,4 @@ def kpi_card(
     </body></html>
     """
 
-    st.html(card_html, height=height + 40)
+    st.html(card_html)

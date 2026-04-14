@@ -24,11 +24,7 @@ from config import (
 )
 
 
-def render_file_heatmap(
-    df: pd.DataFrame,
-    status_col: str = "",
-    status_label: str = "Overall",
-) -> None:
+def render_file_heatmap(df: pd.DataFrame) -> None:
     """
     Render the file delivery timeliness heatmap.
 
@@ -39,15 +35,10 @@ def render_file_heatmap(
     ----------
     df : DataFrame
         Filtered file delivery data.
-    status_col : str
-        Unused — kept for call-signature compatibility. Colour is based
-        on erp_delivery_days.
-    status_label : str
-        Human-readable label for subtitle.
     """
     section_title(
         "File Delivery Grid",
-        f"Delivery timeliness by file and date — {status_label}",
+        "Delivery timeliness by file and date",
     )
 
     if df.empty:

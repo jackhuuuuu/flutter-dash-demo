@@ -76,27 +76,7 @@ def _fmt_tol(val) -> str:
     return f"{v:,.0f}"
 
 
-def _build_value_tooltip(row, tokens) -> str:
-    """Build an HTML tooltip showing check values and tolerances."""
-    daily_val = _fmt_val(row.get(COL_CHECK_DAILY_VALUE))
-    mtd_val = _fmt_val(row.get(COL_CHECK_MTD_VALUE))
-    d_rev_tol = _fmt_tol(row.get(COL_DAILY_REV_TOLERANCE))
-    m_rev_tol = _fmt_tol(row.get(COL_MTD_REV_TOLERANCE))
-    d_epm_tol = _fmt_tol(row.get(COL_DAILY_EPM_TOLERANCE))
-    m_epm_tol = _fmt_tol(row.get(COL_MTD_EPM_TOLERANCE))
-
-    return (
-        f'<div class="tooltip-box">'
-        f'<b>Daily Value:</b> {daily_val}<br>'
-        f'<b>MTD Value:</b> {mtd_val}<br>'
-        f'<hr style="margin:4px 0;border-color:{tokens.border}">'
-        f'<b>Revenue Tol:</b> Daily {d_rev_tol} | MTD {m_rev_tol}<br>'
-        f'<b>EPM Tol:</b> Daily {d_epm_tol} | MTD {m_epm_tol}'
-        f'</div>'
-    )
-
-
-def render_detail_table(df: pd.DataFrame, view_mode: str = "All") -> None:
+def render_detail_table(df: pd.DataFrame, view_mode: str = "Failed Only") -> None:
     """
     Render the check-level detail table.
 
@@ -147,9 +127,15 @@ def render_detail_table(df: pd.DataFrame, view_mode: str = "All") -> None:
         (COL_REPORTING_DATE, "Date"),
         (COL_BRAND, "Brand"),
         (COL_CHECK_NAME, "Check Name"),
+        (COL_CHECK_DAILY_VALUE, "Daily Value"),
+        (COL_CHECK_MTD_VALUE, "MTD Value"),
         (COL_REVENUE_STATUS, "Revenue"),
         (COL_EPM_STATUS, "EPM"),
         (COL_OVERALL_STATUS, "Overall"),
+        (COL_DAILY_REV_TOLERANCE, "ERP Daily Tol"),
+        (COL_MTD_REV_TOLERANCE, "ERP MTD Tol"),
+        (COL_DAILY_EPM_TOLERANCE, "EPM Daily Tol"),
+        (COL_MTD_EPM_TOLERANCE, "EPM MTD Tol"),
         (COL_REV_LIFECYCLE, "Rev Lifecycle"),
         (COL_EPM_LIFECYCLE, "EPM Lifecycle"),
     ]
@@ -158,35 +144,6 @@ def render_detail_table(df: pd.DataFrame, view_mode: str = "All") -> None:
         [COL_REPORTING_DATE, COL_CHECK_NAME],
         ascending=[False, True],
     )
-
-    # Tooltip CSS
-    tooltip_css = f"""
-    <style>
-      .check-cell {{
-        position: relative;
-        cursor: help;
-      }}
-      .check-cell .tooltip-box {{
-        display: none;
-        position: absolute;
-        left: 0;
-        top: 100%;
-        z-index: 100;
-        background: {tokens.bg_elevated};
-        border: 1px solid {tokens.border};
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 11px;
-        color: {tokens.text_primary};
-        white-space: nowrap;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        font-family: {tokens.font_mono};
-      }}
-      .check-cell:hover .tooltip-box {{
-        display: block;
-      }}
-    </style>
-    """
 
     # Header
     header_cells = ""
@@ -213,12 +170,13 @@ def render_detail_table(df: pd.DataFrame, view_mode: str = "All") -> None:
                 val = _status_badge(str(val), tokens)
             elif col_name in (COL_REV_LIFECYCLE, COL_EPM_LIFECYCLE):
                 val = _lifecycle_badge(str(val), tokens)
+            elif col_name in (COL_CHECK_DAILY_VALUE, COL_CHECK_MTD_VALUE):
+                val = _fmt_val(val)
+            elif col_name in (COL_DAILY_REV_TOLERANCE, COL_MTD_REV_TOLERANCE,
+                              COL_DAILY_EPM_TOLERANCE, COL_MTD_EPM_TOLERANCE):
+                val = _fmt_tol(val)
             elif col_name == COL_CHECK_NAME:
-                # Wrap check name with a tooltip showing values & tolerances
-                tooltip = _build_value_tooltip(row, tokens)
-                val = (
-                    f'<span class="check-cell">{val}{tooltip}</span>'
-                )
+                val = str(val) if pd.notna(val) else "—"
             else:
                 val = str(val) if pd.notna(val) else "—"
 
@@ -231,7 +189,6 @@ def render_detail_table(df: pd.DataFrame, view_mode: str = "All") -> None:
         body_rows += f"<tr>{cells}</tr>"
 
     table_html = f"""
-    {tooltip_css}
     <div style="overflow-x:auto;border-radius:10px;border:1px solid {tokens.border};">
       <table style="width:100%;border-collapse:collapse;
                      background:{tokens.bg_surface};

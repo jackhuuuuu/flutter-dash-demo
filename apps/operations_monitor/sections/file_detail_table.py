@@ -17,6 +17,7 @@ from config import (
     COL_REPORTING_DATE, COL_BRAND, COL_FILE_NAME, COL_CURRENT_FLAG,
     COL_FILE_ERP_STATUS, COL_FILE_EPM_STATUS, COL_FILE_OVERALL_STATUS,
     COL_ERP_DELIVERY_DAYS, COL_EPM_DELIVERY_DAYS, COL_ERP_RESOLUTION_HRS,
+    COL_ERP_FINAL_RESENT_AT,
     COL_DELIVERY_LIFECYCLE, COL_LATEST_ROW_COUNT,
     STATUS_FAIL, DELIVERY_EPM_ONLY,
 )
@@ -86,6 +87,7 @@ def render_file_detail_table(df: pd.DataFrame) -> None:
         (COL_DELIVERY_LIFECYCLE, "Lifecycle"),
         (COL_ERP_DELIVERY_DAYS, "ERP Days"),
         (COL_ERP_RESOLUTION_HRS, "Resolution (hrs)"),
+        (COL_ERP_FINAL_RESENT_AT, "Resent At"),
         (COL_LATEST_ROW_COUNT, "Row Count"),
     ]
 
@@ -135,6 +137,15 @@ def render_file_detail_table(df: pd.DataFrame) -> None:
                 val = f"{val:.1f}" if pd.notna(val) else "—"
             elif col_name == COL_LATEST_ROW_COUNT:
                 val = f"{int(val):,}" if pd.notna(val) else "—"
+            elif col_name == COL_ERP_FINAL_RESENT_AT:
+                if pd.notna(val):
+                    ts = str(val)[:19].replace("T", " ")
+                    val = (
+                        f'<span style="color:{tokens.warning};'
+                        f'font-weight:600;">🔄 {ts}</span>'
+                    )
+                else:
+                    val = "—"
             else:
                 val = str(val) if pd.notna(val) else "—"
 

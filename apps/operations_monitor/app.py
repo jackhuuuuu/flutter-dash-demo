@@ -36,7 +36,6 @@ from config import (
     COL_FILE_OVERALL_STATUS, COL_OVERALL_STATUS,
     COL_FILE_LATEST_RUN,
     COL_DELIVERY_LIFECYCLE,
-    FILE_STATUS_TYPES, CHECK_STATUS_TYPES,
     DELIVERY_ERP_DELIVERED, DELIVERY_EPM_ONLY, DELIVERY_MANUAL_OVERRIDE,
 )
 from data_loader import load_file_delivery, load_dq_monitor, load_check_file_mapping
@@ -131,15 +130,10 @@ with st.sidebar:
     if not sel_files:
         sel_files = list(all_files)
 
-    # Lifecycle filter
-    lifecycle_options = ["All", "ERP_DELIVERED", "EPM_ONLY", "MANUAL_OVERRIDE"]
-    sel_lifecycle = st.selectbox("Delivery Lifecycle", lifecycle_options, key="lifecycle_filter")
-
-    # Status view for file heatmap
-    sel_file_status_label = st.selectbox(
-        "Status View",
-        list(FILE_STATUS_TYPES.keys()),
-        key="file_status_view",
+    # Table view filter (applies to file table only)
+    lifecycle_options = ["All", "EPM_ONLY", "ERP_DELIVERED", "MANUAL_OVERRIDE"]
+    sel_lifecycle = st.selectbox(
+        "Table View", lifecycle_options, index=1, key="lifecycle_filter",
     )
 
     st.markdown("---")
@@ -161,15 +155,8 @@ with st.sidebar:
     if not sel_checks:
         sel_checks = list(all_checks)
 
-    # Status view for check heatmap
-    sel_check_status_label = st.selectbox(
-        "Status View",
-        list(CHECK_STATUS_TYPES.keys()),
-        key="check_status_view",
-    )
-
     # Check table view mode
-    check_view_options = ["All", "Failed Only", "Passed Only"]
+    check_view_options = ["Failed Only", "All", "Passed Only"]
     sel_check_view = st.selectbox("Table View", check_view_options, key="check_table_view")
 
     st.markdown("---")
@@ -188,13 +175,6 @@ with st.sidebar:
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# MAP STATUS SELECTIONS TO COLUMNS
-# ══════════════════════════════════════════════════════════════════════════════
-
-sel_file_status_col = FILE_STATUS_TYPES.get(sel_file_status_label, COL_FILE_OVERALL_STATUS)
-sel_check_status_col = CHECK_STATUS_TYPES.get(sel_check_status_label, COL_OVERALL_STATUS)
-
 brand_label = (
     ", ".join(sel_brands)
     if len(sel_brands) < len(all_brands)
@@ -206,16 +186,19 @@ brand_label = (
 # FILTER DATA
 # ══════════════════════════════════════════════════════════════════════════════
 
-# File delivery filtering
+# File delivery filtering (brand + file name — lifecycle applied only to table)
 df_files_filtered = df_files[
     df_files[COL_BRAND].isin(sel_brands)
     & df_files[COL_FILE_NAME].isin(sel_files)
 ].copy()
 
+# Lifecycle-filtered view for the detail table only
 if sel_lifecycle != "All":
-    df_files_filtered = df_files_filtered[
+    df_files_table = df_files_filtered[
         df_files_filtered[COL_DELIVERY_LIFECYCLE] == sel_lifecycle
     ].copy()
+else:
+    df_files_table = df_files_filtered
 
 # Check detail filtering
 df_checks_filtered = df_checks[
@@ -256,19 +239,11 @@ tab_files, tab_checks = st.tabs(["📁 File Delivery", "🔍 Check Detail"])
 # ── Tab 1: File Delivery ─────────────────────────────────────────────────
 with tab_files:
     render_file_kpi_section(df_files_filtered)
-    render_file_heatmap(
-        df_files_filtered,
-        status_col=sel_file_status_col,
-        status_label=sel_file_status_label,
-    )
-    render_file_detail_table(df_files_filtered)
+    render_file_heatmap(df_files_filtered)
+    render_file_detail_table(df_files_table)
 
 # ── Tab 2: Check Detail ──────────────────────────────────────────────────
 with tab_checks:
     render_kpi_section(df_checks_filtered)
-    render_heatmap(
-        df_checks_filtered,
-        status_col=sel_check_status_col,
-        status_label=sel_check_status_label,
-    )
+    render_heatmap(df_checks_filtered)
     render_detail_table(df_checks_filtered, view_mode=sel_check_view)
